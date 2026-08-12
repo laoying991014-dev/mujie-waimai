@@ -25,9 +25,10 @@ async function bootstrap() {
   }
   logger.log(`前端静态资源目录: ${clientDir}`);
 
-  // 托管前端静态资源（JS、CSS、图片等）
+  // 托管前端静态资源（JS、CSS、图片等），设置 index: false 避免直接返回 index.html
   app.useStaticAssets(clientDir, {
     prefix: '/',
+    index: false,
   });
 
   // 注册视图引擎
