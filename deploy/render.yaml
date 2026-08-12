@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: mujie-waimai
+    runtime: docker
+    repo: https://github.com/laoying991014-dev/mujie-waimai
+    branch: main
+    dockerfilePath: deploy/Dockerfile
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /
+    autoDeploy: yes
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVER_HOST
+        value: 0.0.0.0
+      - key: SERVER_PORT
+        value: "3000"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FORCE_FRAMEWORK_DISABLE_DATAPASS
+        value: "true"
+      - key: ENABLE_CSRF
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mujie-waimai-db
+          property: connectionString
+
+  - type: postgres
+    name: mujie-waimai-db
+    plan: starter
+    postgresMajorVersion: "16"
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere

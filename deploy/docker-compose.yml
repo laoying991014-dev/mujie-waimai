@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mujie-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mujie_waimai
+      POSTGRES_USER: mujie
+      POSTGRES_PASSWORD: mujie123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mujie -d mujie_waimai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: mujie-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 3000
+      DATABASE_URL: postgresql://mujie:mujie123@postgres:5432/mujie_waimai
+      JWT_SECRET: mujie-waimai-jwt-secret-key-change-me
+      FORCE_FRAMEWORK_DISABLE_DATAPASS: "true"
+      ENABLE_CSRF: "false"
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
