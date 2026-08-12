@@ -1,46 +1,23 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { ErrorBoundary } from 'react-error-boundary';
-import { createPortal } from 'react-dom';
-import RoutesComponent from './app.tsx';
-import './index.css';
-import { Toaster } from '@client/src/components/ui/sonner';
 
-console.log('=== 木姐外卖前端启动 ===');
-console.log('所有模块加载成功');
+console.log('=== 测试 Tailwind 样式 ===');
 
-const CLIENT_BASE_PATH = process.env.CLIENT_BASE_PATH || '/';
-
-const SimpleErrorFallback = ({ error }: { error: Error }) => (
-  <div style={{ padding: '20px', color: 'red', fontFamily: 'sans-serif' }}>
-    <h2>应用出错了</h2>
-    <pre style={{ background: '#f5f5f5', padding: '10px', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-      {error.message}
-      {'\n'}
-      {error.stack}
-    </pre>
-  </div>
-);
-
-const MainApp = () => {
-  console.log('MainApp 开始渲染');
+const TestApp = () => {
   return (
-    <ErrorBoundary fallbackRender={({ error }) => {
-      console.error('ErrorBoundary 捕获到错误:', error);
-      return <SimpleErrorFallback error={error} />;
-    }}>
-      <BrowserRouter basename={CLIENT_BASE_PATH}>
-        <RoutesComponent />
-        {createPortal(<Toaster />, document.body)}
-      </BrowserRouter>
-    </ErrorBoundary>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+      <h1 className="text-3xl font-bold text-primary mb-4">木姐外卖</h1>
+      <p className="text-foreground text-lg mb-2">Tailwind 样式测试</p>
+      <p className="text-muted-foreground">如果能看到这些文字，说明 Tailwind 正常工作。</p>
+      <div className="mt-6 p-4 bg-card rounded-lg shadow border border-border">
+        <p className="text-card-foreground">这是一个卡片组件</p>
+      </div>
+    </div>
   );
 };
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  console.log('找到 root 元素，开始渲染');
-  createRoot(rootElement).render(<MainApp />);
-  console.log('render 调用完成');
+  createRoot(rootElement).render(<TestApp />);
+  console.log('测试页面渲染完成');
 }
