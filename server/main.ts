@@ -1,3 +1,8 @@
+// 必须在最顶部设置，在导入 @lark-apaas 模块之前生效
+process.env.ENABLE_CSRF = 'false';
+process.env.DISABLE_CSRF = 'true';
+process.env.FORCE_FRAMEWORK_DISABLE_CSRF = 'true';
+
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { configureApp } from '@lark-apaas/fullstack-nestjs-core';
@@ -8,10 +13,6 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // 禁用 CSRF 保护（自建环境下不需要）
-  process.env.ENABLE_CSRF = 'false';
-  process.env.DISABLE_CSRF = 'true';
-
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     abortOnError: process.env.NODE_ENV !== 'development',
   });
