@@ -17,6 +17,9 @@ RUN npm run build:server
 # 构建前端 (React/Vite)
 RUN npm run build:client
 
+# 调试：显示构建产物目录结构
+RUN echo "=== dist 目录结构 ===" && find dist -type f | head -50
+
 # ---- 运行阶段 ----
 FROM node:22-alpine AS runner
 WORKDIR /app
