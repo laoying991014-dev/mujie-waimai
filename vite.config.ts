@@ -7,4 +7,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'client/src'),
     },
   },
+  build: {
+    outDir: 'dist/client',
+    emptyOutDir: true,
+  },
 });
