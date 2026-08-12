@@ -17,7 +17,6 @@ async function bootstrap() {
   });
   await configureApp(app, {
     disableSwagger: true,
-    disableCsrf: true,
   });
   const logger = new Logger('Bootstrap');
   const host = process.env.SERVER_HOST || 'localhost';
