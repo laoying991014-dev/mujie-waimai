@@ -5,10 +5,9 @@ services:
     repo: https://github.com/laoying991014-dev/mujie-waimai
     branch: main
     dockerfilePath: deploy/Dockerfile
-    plan: starter
-    numInstances: 1
+    plan: free
     healthCheckPath: /
-    autoDeploy: yes
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
@@ -31,7 +30,7 @@ services:
 
   - type: postgres
     name: mujie-waimai-db
-    plan: starter
+    plan: free
     postgresMajorVersion: "16"
     ipAllowList:
       - source: 0.0.0.0/0
