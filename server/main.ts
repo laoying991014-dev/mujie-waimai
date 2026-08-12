@@ -8,11 +8,16 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // 禁用 CSRF 保护（自建环境下不需要）
+  process.env.ENABLE_CSRF = 'false';
+  process.env.DISABLE_CSRF = 'true';
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     abortOnError: process.env.NODE_ENV !== 'development',
   });
   await configureApp(app, {
     disableSwagger: true,
+    disableCsrf: true,
   });
   const logger = new Logger('Bootstrap');
   const host = process.env.SERVER_HOST || 'localhost';
