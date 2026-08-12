@@ -7,11 +7,23 @@ import { existsSync, readFileSync } from 'fs';
 export class ViewController {
   @Get(['/', '*'])
   async render(@Req() req: Request, @Res() res: Response): Promise<void> {
-    // API 路由返回 404
-    if (req.path.startsWith('/api')) {
+    const path = req.path;
+
+    // 排除 API 和其他非页面请求
+    if (
+      path.startsWith('/api') ||
+      path.startsWith('/spark') ||
+      path.startsWith('/metrics') ||
+      path.startsWith('/health') ||
+      path.startsWith('/static')
+    ) {
       res.status(404).json({ message: 'Not Found' });
       return;
     }
+
+    // 只对接受 HTML 的请求返回页面（通过 Accept 头判断）
+    const accept = req.headers.accept || '';
+    const isHtmlRequest = accept.includes('text/html') || accept.includes('*/*');
 
     // 自动检测前端目录
     let clientDir = join(process.cwd(), 'dist/client');
@@ -20,9 +32,15 @@ export class ViewController {
     }
 
     // 检查请求的静态文件是否存在（如 /assets/xxx.js, /favicon.svg）
-    const filePath = join(clientDir, req.path);
-    if (existsSync(filePath) && req.path !== '/') {
+    const filePath = join(clientDir, path);
+    if (existsSync(filePath) && path !== '/') {
       res.sendFile(filePath);
+      return;
+    }
+
+    // 如果不是 HTML 请求，返回 404
+    if (!isHtmlRequest && path !== '/') {
+      res.status(404).json({ message: 'Not Found' });
       return;
     }
 
@@ -35,10 +53,10 @@ export class ViewController {
 
     let html = readFileSync(indexPath, 'utf-8');
 
-    // 替换模板变量
-    const platformData = (req as any).__platform_data__ ?? {};
-    html = html.replace(/\{\{\{__platform__\}\}\}/g, JSON.stringify(platformData).replace(/"/g, '&quot;'));
-    html = html.replace(/\{\{__platform__\}\}/g, JSON.stringify(platformData));
+    // 替换模板变量 - 直接用空对象，避免解析错误
+    const emptyPlatform = JSON.stringify({});
+    html = html.replace(/\{\{\{__platform__\}\}\}/g, emptyPlatform);
+    html = html.replace(/\{\{__platform__\}\}/g, emptyPlatform);
     html = html.replace(/\{\{appName\}\}/g, '木姐外卖');
     html = html.replace(/\{\{appAvatar\}\}/g, '');
     html = html.replace(/\{\{appDescription\}\}/g, '木姐外卖 - 全栈外卖点餐系统');
