@@ -1,7 +1,7 @@
 import { Controller, Get, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 @Controller()
 export class ViewController {
@@ -26,13 +26,24 @@ export class ViewController {
       return;
     }
 
-    // SPA 路由：返回 index.html（用 hbs 渲染模板变量）
+    // 手动读取 index.html 并替换模板变量
+    const indexPath = join(clientDir, 'index.html');
+    if (!existsSync(indexPath)) {
+      res.status(500).send('index.html not found');
+      return;
+    }
+
+    let html = readFileSync(indexPath, 'utf-8');
+
+    // 替换模板变量
     const platformData = (req as any).__platform_data__ ?? {};
-    res.render('index', {
-      __platform__: JSON.stringify(platformData),
-      appName: '木姐外卖',
-      appAvatar: '',
-      appDescription: '木姐外卖 - 全栈外卖点餐系统',
-    });
+    html = html.replace(/\{\{\{__platform__\}\}\}/g, JSON.stringify(platformData).replace(/"/g, '&quot;'));
+    html = html.replace(/\{\{__platform__\}\}/g, JSON.stringify(platformData));
+    html = html.replace(/\{\{appName\}\}/g, '木姐外卖');
+    html = html.replace(/\{\{appAvatar\}\}/g, '');
+    html = html.replace(/\{\{appDescription\}\}/g, '木姐外卖 - 全栈外卖点餐系统');
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
   }
 }
