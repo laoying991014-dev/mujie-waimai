@@ -7,7 +7,7 @@ WORKDIR /app
 
 # 安装依赖
 COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 # 复制源码
 COPY . .
@@ -32,7 +32,7 @@ ENV NODE_ENV=production \
 COPY package.json package-lock.json* ./
 
 # 安装生产依赖
-RUN npm ci --omit=dev --no-audit --no-fund && \
+RUN npm install --omit=dev --no-audit --no-fund && \
     npm cache clean --force
 
 # 复制构建产物（后端 + 前端）
