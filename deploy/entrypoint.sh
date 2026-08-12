@@ -3,22 +3,6 @@ set -e
 
 echo "=== 木姐外卖 - 启动脚本 ==="
 
-# 检查前端文件
-echo "=== 检查前端构建产物 ==="
-if [ -f "/app/dist/client/index.html" ]; then
-  echo "✓ 找到 dist/client/index.html"
-  echo "index.html 前20行:"
-  head -20 /app/dist/client/index.html
-elif [ -f "/app/dist/index.html" ]; then
-  echo "✓ 找到 dist/index.html"
-  echo "index.html 前20行:"
-  head -20 /app/dist/index.html
-else
-  echo "✗ 未找到 index.html！"
-  echo "dist 目录结构:"
-  find /app/dist -type f | head -30
-fi
-
 # 数据库初始化
 if [ -z "$DATABASE_URL" ]; then
   echo "错误: DATABASE_URL 环境变量未设置"

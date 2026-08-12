@@ -15,12 +15,7 @@ COPY . .
 RUN npm run build:server
 
 # 构建前端 (React/Vite)
-RUN npm run build:client 2>&1 | tee /tmp/build-client.log
-
-# 调试：显示构建结果
-RUN echo "=== 构建日志尾部 ===" && tail -30 /tmp/build-client.log && \
-    echo "=== dist 完整结构 ===" && find dist -type f && \
-    echo "=== index.html 内容（如果存在）===" && (cat dist/client/index.html 2>/dev/null || cat dist/index.html 2>/dev/null || echo "未找到 index.html")
+RUN npm run build:client
 
 # ---- 运行阶段 ----
 FROM node:22-alpine AS runner
