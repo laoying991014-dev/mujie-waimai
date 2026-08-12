@@ -2,7 +2,6 @@
 
 # ---- 构建阶段 ----
 FROM node:22-alpine AS builder
-
 WORKDIR /app
 
 # 安装依赖
@@ -20,8 +19,10 @@ RUN npm run build:client
 
 # ---- 运行阶段 ----
 FROM node:22-alpine AS runner
-
 WORKDIR /app
+
+# 安装 psql 客户端用于数据库初始化
+RUN apk add --no-cache postgresql-client
 
 ENV NODE_ENV=production \
     SERVER_HOST=0.0.0.0 \
@@ -38,14 +39,21 @@ RUN npm install --omit=dev --no-audit --no-fund && \
 # 复制构建产物（后端 + 前端）
 COPY --from=builder /app/dist ./dist
 
-# 创建静态资源目录（供 StaticModule 使用）
+# 复制 SQL 初始化脚本
+COPY deploy/sql ./deploy/sql
+
+# 复制启动脚本
+COPY deploy/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+# 创建静态资源目录
 RUN mkdir -p shared/static
 
 EXPOSE 3000
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# 启动命令
-CMD ["node", "dist/server/main.js"]
+# 启动命令（先初始化数据库，再启动应用）
+CMD ["./entrypoint.sh"]
