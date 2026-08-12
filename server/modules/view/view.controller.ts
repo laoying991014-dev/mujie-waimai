@@ -53,13 +53,11 @@ export class ViewController {
 
     let html = readFileSync(indexPath, 'utf-8');
 
-    // 替换模板变量 - 直接用空对象，避免解析错误
-    const emptyPlatform = JSON.stringify({});
-    html = html.replace(/\{\{\{__platform__\}\}\}/g, emptyPlatform);
-    html = html.replace(/\{\{__platform__\}\}/g, emptyPlatform);
-    html = html.replace(/\{\{appName\}\}/g, '木姐外卖');
-    html = html.replace(/\{\{appAvatar\}\}/g, '');
-    html = html.replace(/\{\{appDescription\}\}/g, '木姐外卖 - 全栈外卖点餐系统');
+    // 替换模板变量 - 用更宽松的正则，处理可能的空格和不同括号数量
+    html = html.replace(/\{\{+\s*__platform__\s*\}\}+/g, '{}');
+    html = html.replace(/\{\{+\s*appName\s*\}\}+/g, '木姐外卖');
+    html = html.replace(/\{\{+\s*appAvatar\s*\}\}+/g, '');
+    html = html.replace(/\{\{+\s*appDescription\s*\}\}+/g, '木姐外卖 - 全栈外卖点餐系统');
 
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
