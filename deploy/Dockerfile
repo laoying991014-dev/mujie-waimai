@@ -18,7 +18,7 @@ RUN npm run build:server
 RUN npm run build:client
 
 # 调试：显示构建产物目录结构
-RUN echo "=== dist 目录结构 ===" && find dist -type f | head -50
+RUN echo "=== dist 根目录 ===" && ls -la dist/ && echo "=== 查找 index.html ===" && find dist -name "index.html" && echo "=== 查找前端JS ===" && find dist -name "*.js" | grep -v server | head -20
 
 # ---- 运行阶段 ----
 FROM node:22-alpine AS runner
