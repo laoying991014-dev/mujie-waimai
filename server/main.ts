@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { configureApp } from '@lark-apaas/fullstack-nestjs-core';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { __express as hbsExpressEngine } from 'hbs';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
@@ -17,13 +18,20 @@ async function bootstrap() {
   const host = process.env.SERVER_HOST || 'localhost';
   const port = Number(process.env.SERVER_PORT || '3000');
 
+  // 自动检测前端构建产物目录（优先 dist/client，其次 dist）
+  let clientDir = join(process.cwd(), 'dist/client');
+  if (!existsSync(join(clientDir, 'index.html'))) {
+    clientDir = join(process.cwd(), 'dist');
+  }
+  logger.log(`前端静态资源目录: ${clientDir}`);
+
   // 托管前端静态资源（JS、CSS、图片等）
-  app.useStaticAssets(join(process.cwd(), 'dist/client'), {
+  app.useStaticAssets(clientDir, {
     prefix: '/',
   });
 
-  // 注册视图引擎, 渲染 client 目录下的 html 文件
-  app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
+  // 注册视图引擎
+  app.setBaseViewsDir(clientDir);
   app.setViewEngine('html');
   app.engine('html', hbsExpressEngine);
 
