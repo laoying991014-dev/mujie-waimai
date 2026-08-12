@@ -1,14 +1,17 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import UserLayout from './components/user-layout';
+import HomePage from './pages/HomePage/HomePage';
 
-console.log('=== 测试 UserLayout ===');
+console.log('=== 测试 HomePage ===');
 
 const TestApp = () => {
   return (
     <BrowserRouter>
-      <UserLayout />
+      <div className="min-h-screen bg-background p-4">
+        <h2 className="text-xl font-bold mb-4 text-foreground">下面是 HomePage 内容：</h2>
+        <HomePage />
+      </div>
     </BrowserRouter>
   );
 };
@@ -16,5 +19,5 @@ const TestApp = () => {
 const rootElement = document.getElementById('root');
 if (rootElement) {
   createRoot(rootElement).render(<TestApp />);
-  console.log('UserLayout 测试页面渲染完成');
+  console.log('HomePage 测试页面渲染完成');
 }
