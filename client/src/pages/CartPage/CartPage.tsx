@@ -660,7 +660,7 @@ const AddressEditDialog: React.FC<AddressEditDialogProps> = ({
 
   const handleSubmit = (): void => {
     if (!receiverName.trim()) return setError('请输入收货人姓名');
-    if (!/^(1[3-9]\d{9}|09\d{8})$/.test(receiverPhone.trim())) return setError('请输入正确的手机号');
+    if (!/^\d{7,15}$/.test(receiverPhone.trim())) return setError('请输入正确的手机号');
     if (!detailAddress.trim()) return setError('请输入收货地址');
     onSave({
       receiverName: receiverName.trim(),
