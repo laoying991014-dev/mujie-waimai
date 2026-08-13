@@ -80,21 +80,44 @@ export class DatabaseInitService implements OnModuleInit {
       return;
     }
 
-    // 移除注释和空行，按分号分割语句
-    const statements = content
-      .split(/;\s*\n/)
-      .map((s) => s.trim())
-      .filter((s) => s && !s.startsWith('--'));
+    // 按行拼接语句，直到遇到以分号结尾的行
+    const lines = content.split('\n');
+    const statements: string[] = [];
+    let currentStatement = '';
 
-    for (const statement of statements) {
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // 跳过注释行和空行
+      if (!trimmed || trimmed.startsWith('--')) {
+        continue;
+      }
+      currentStatement += line + '\n';
+      // 如果行以分号结尾，说明语句结束
+      if (trimmed.endsWith(';')) {
+        statements.push(currentStatement.trim());
+        currentStatement = '';
+      }
+    }
+
+    // 处理最后一条没有换行的语句
+    if (currentStatement.trim()) {
+      statements.push(currentStatement.trim());
+    }
+
+    this.logger.log(`共解析到 ${statements.length} 条 SQL 语句`);
+
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
       try {
         await sql.unsafe(statement);
+        this.logger.debug(`执行第 ${i + 1} 条语句成功`);
       } catch (error: any) {
         // 忽略 "already exists" 类错误（表已存在等）
-        if (error?.message?.includes('already exists')) {
-          this.logger.debug(`跳过已存在对象: ${error.message.split('\n')[0]}`);
+        if (error?.message?.includes('already exists') || error?.message?.includes('duplicate key')) {
+          this.logger.debug(`跳过第 ${i + 1} 条: ${error.message.split('\n')[0]}`);
         } else {
-          this.logger.warn(`SQL 执行警告: ${error.message?.split('\n')[0]}`);
+          this.logger.error(`第 ${i + 1} 条语句执行失败: ${error.message?.split('\n')[0]}`);
+          this.logger.error(`语句内容前100字符: ${statement.substring(0, 100)}`);
         }
       }
     }
