@@ -27,7 +27,10 @@ RUN apk add --no-cache postgresql-client
 ENV NODE_ENV=production \
     SERVER_HOST=0.0.0.0 \
     SERVER_PORT=3000 \
-    FORCE_FRAMEWORK_DISABLE_DATAPASS=true
+    FORCE_FRAMEWORK_DISABLE_DATAPASS=true \
+    ENABLE_CSRF=false \
+    DISABLE_CSRF=true \
+    FORCE_FRAMEWORK_DISABLE_CSRF=true
 
 # 复制 package.json 用于安装生产依赖
 COPY package.json package-lock.json* ./
