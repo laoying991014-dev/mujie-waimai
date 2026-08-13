@@ -154,31 +154,8 @@ const MerchantSettingsPage: React.FC = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="deliveryFee">配送费（元）</Label>
-              <Input
-                id="deliveryFee"
-                name="deliveryFee"
-                type="number"
-                value={form.deliveryFee}
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">配送费由平台统一设置</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="minOrderAmount">起送金额（元）</Label>
-              <Input
-                id="minOrderAmount"
-                name="minOrderAmount"
-                type="number"
-                value={form.minOrderAmount}
-                onChange={handleChange}
-                placeholder="0.00"
-                disabled={loading}
-              />
-            </div>
+          <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+            配送费和起送金额由平台管理员统一设置，如有调整需求请联系平台客服。
           </div>
         </CardContent>
       </Card>

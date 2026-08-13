@@ -11,7 +11,6 @@ interface SaveSettingsDto {
   shopDescription: string;
   businessStartTime: string;
   businessEndTime: string;
-  minOrderAmount: string;
 }
 
 @Injectable()
@@ -66,7 +65,6 @@ export class MerchantShopService {
         shopDescription: dto.shopDescription,
         businessStartTime: dto.businessStartTime,
         businessEndTime: dto.businessEndTime,
-        minOrderAmount: dto.minOrderAmount,
       })
       .where(eq(merchant.id, merchantId))
       .returning({ id: merchant.id });

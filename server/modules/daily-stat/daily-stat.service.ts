@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
-import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
+import { eq, and, gte, lte, sql, desc, type SQL } from 'drizzle-orm';
 import { merchant, orderInfo, merchantDailyStat } from '../../database/schema';
 
 @Injectable()
@@ -107,7 +107,7 @@ export class DailyStatService {
     pageSize = 30,
   ): Promise<{ items: any[]; total: number; page: number; pageSize: number }> {
     const offset = (page - 1) * pageSize;
-    const conditions = [];
+    const conditions: SQL[] = [];
 
     if (merchantId) {
       conditions.push(eq(merchantDailyStat.merchantId, merchantId));
