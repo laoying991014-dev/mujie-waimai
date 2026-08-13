@@ -27,6 +27,7 @@ import AdminProductsPage from './pages/admin/AdminProductsPage/AdminProductsPage
 import AdminOrdersPage from './pages/admin/AdminOrdersPage/AdminOrdersPage';
 import AdminNoticesPage from './pages/admin/AdminNoticesPage/AdminNoticesPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage/AdminSettingsPage';
+import AdminDailyStatsPage from './pages/admin/AdminDailyStatsPage/AdminDailyStatsPage';
 
 const RoutesComponent = () => {
   const navigate = useNavigate();
@@ -160,6 +161,14 @@ const RoutesComponent = () => {
           element={
             <ProtectedRoute role="admin">
               <AdminOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="daily-stats"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDailyStatsPage />
             </ProtectedRoute>
           }
         />

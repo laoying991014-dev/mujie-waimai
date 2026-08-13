@@ -162,10 +162,10 @@ const MerchantSettingsPage: React.FC = () => {
                 name="deliveryFee"
                 type="number"
                 value={form.deliveryFee}
-                onChange={handleChange}
-                placeholder="0.00"
-                disabled={loading}
+                disabled
+                className="bg-muted"
               />
+              <p className="text-xs text-muted-foreground">配送费由平台统一设置</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="minOrderAmount">起送金额（元）</Label>

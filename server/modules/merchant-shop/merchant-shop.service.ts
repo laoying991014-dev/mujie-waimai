@@ -11,7 +11,6 @@ interface SaveSettingsDto {
   shopDescription: string;
   businessStartTime: string;
   businessEndTime: string;
-  deliveryFee: string;
   minOrderAmount: string;
 }
 
@@ -67,7 +66,6 @@ export class MerchantShopService {
         shopDescription: dto.shopDescription,
         businessStartTime: dto.businessStartTime,
         businessEndTime: dto.businessEndTime,
-        deliveryFee: dto.deliveryFee,
         minOrderAmount: dto.minOrderAmount,
       })
       .where(eq(merchant.id, merchantId))

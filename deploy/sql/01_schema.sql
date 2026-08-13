@@ -297,3 +297,21 @@ CREATE TABLE IF NOT EXISTS notice (
   _created_at TIMESTAMP(3) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   _updated_at TIMESTAMP(3) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ============================================================
+-- 14. 商家每日统计表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS merchant_daily_stat (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  merchant_id UUID NOT NULL,
+  stat_date VARCHAR(10) NOT NULL,
+  total_orders INTEGER NOT NULL DEFAULT 0,
+  total_delivery_fee NUMERIC NOT NULL DEFAULT 0,
+  total_revenue NUMERIC NOT NULL DEFAULT 0,
+  _created_at TIMESTAMP(3) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  _updated_at TIMESTAMP(3) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (merchant_id, stat_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_merchant_daily_stat_date ON merchant_daily_stat (stat_date);
+CREATE INDEX IF NOT EXISTS idx_merchant_daily_stat_merchant ON merchant_daily_stat (merchant_id);

@@ -9,6 +9,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  BarChart3,
 } from 'lucide-react';
 import Logo from './Logo';
 import { useAuthStore } from '../store/auth';
@@ -23,6 +24,7 @@ const AdminLayout: React.FC = () => {
     { path: '/admin/merchants', icon: Store, label: '商家管理' },
     { path: '/admin/products', icon: Package, label: '商品管理' },
     { path: '/admin/orders', icon: ClipboardList, label: '订单管理' },
+    { path: '/admin/daily-stats', icon: BarChart3, label: '配送费统计' },
     { path: '/admin/notices', icon: Bell, label: '公告管理' },
     { path: '/admin/settings', icon: Settings, label: '网站设置' },
   ];

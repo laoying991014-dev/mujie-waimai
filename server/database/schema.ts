@@ -413,3 +413,19 @@ export const orderItemTable = orderItem;
 export const productTable = product;
 export const productCategoryTable = productCategory;
 export const siteSettingTable = siteSetting;
+
+// 商家每日统计表
+export const merchantDailyStat = pgTable("merchant_daily_stat", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  merchantId: uuid("merchant_id").notNull(),
+  statDate: varchar("stat_date", { length: 10 }).notNull(),
+  totalOrders: integer("total_orders").notNull().default(0),
+  totalDeliveryFee: numeric("total_delivery_fee").notNull().default('0'),
+  totalRevenue: numeric("total_revenue").notNull().default('0'),
+  createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("merchant_daily_stat_merchant_date_key").on(table.merchantId, table.statDate),
+]);
+
+export const merchantDailyStatTable = merchantDailyStat;
