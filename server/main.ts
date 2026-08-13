@@ -7,7 +7,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { configureApp } from '@lark-apaas/fullstack-nestjs-core';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { __express as hbsExpressEngine } from 'hbs';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
@@ -34,6 +34,15 @@ async function bootstrap() {
   app.useStaticAssets(clientDir, {
     prefix: '/',
     index: false,
+  });
+
+  // 托管上传文件目录
+  const uploadsDir = join(process.cwd(), 'uploads');
+  if (!existsSync(uploadsDir)) {
+    mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.useStaticAssets(uploadsDir, {
+    prefix: '/uploads/',
   });
 
   // 注册视图引擎

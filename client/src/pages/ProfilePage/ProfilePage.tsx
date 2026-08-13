@@ -21,6 +21,7 @@ import { Image } from '@client/src/components/ui/image';
 import { Button } from '@client/src/components/ui/button';
 import { Input } from '@client/src/components/ui/input';
 import { Switch } from '@client/src/components/ui/switch';
+import ImageUpload from '@client/src/components/ImageUpload';
 import {
   Dialog,
   DialogContent,
@@ -356,28 +357,12 @@ const ProfilePage: React.FC = () => {
                 placeholder="请输入昵称"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm text-foreground font-medium">
-                头像 URL
-              </label>
-              <Input
-                value={editAvatarUrl}
-                onChange={(e) => setEditAvatarUrl(e.target.value)}
-                placeholder="请输入头像图片链接"
-              />
-              {editAvatarUrl && (
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-muted border border-border">
-                  <Image
-                    src={editAvatarUrl}
-                    alt="preview"
-                    width={64}
-                    height={64}
-                    className="w-full h-full object-cover"
-                    sizes="64px"
-                  />
-                </div>
-              )}
-            </div>
+            <ImageUpload
+              label="头像"
+              value={editAvatarUrl}
+              onChange={(url) => setEditAvatarUrl(url)}
+              aspectRatio="aspect-square"
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>

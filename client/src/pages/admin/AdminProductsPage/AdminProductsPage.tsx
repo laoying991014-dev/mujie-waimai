@@ -34,6 +34,7 @@ import { Input } from '@client/src/components/ui/input';
 import { Button } from '@client/src/components/ui/button';
 import { Badge } from '@client/src/components/ui/badge';
 import Image from '@client/src/components/ui/image';
+import ImageUpload from '@client/src/components/ImageUpload';
 import {
   Dialog,
   DialogContent,
@@ -602,16 +603,14 @@ const AdminProductsPage: React.FC = () => {
                 placeholder="请输入分类名称"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">图标URL</label>
-              <Input
-                value={categoryForm.iconUrl}
-                onChange={(e) =>
-                  setCategoryForm({ ...categoryForm, iconUrl: e.target.value })
-                }
-                placeholder="请输入图标图片地址"
-              />
-            </div>
+            <ImageUpload
+              label="分类图标"
+              value={categoryForm.iconUrl}
+              onChange={(url) =>
+                setCategoryForm({ ...categoryForm, iconUrl: url })
+              }
+              aspectRatio="aspect-square"
+            />
             <div className="space-y-2">
               <label className="text-sm font-medium">排序号</label>
               <Input

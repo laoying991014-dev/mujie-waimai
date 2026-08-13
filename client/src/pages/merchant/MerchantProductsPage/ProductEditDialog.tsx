@@ -19,6 +19,7 @@ import {
 import { Switch } from '@client/src/components/ui/switch';
 import { Button } from '@client/src/components/ui/button';
 import { Label } from '@client/src/components/ui/label';
+import ImageUpload from '@client/src/components/ImageUpload';
 import { merchantProduct as productApi } from '@client/src/api';
 import type { MerchantCategory } from '@shared/api.interface';
 
@@ -81,7 +82,7 @@ const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
       return;
     }
     if (!form.mainImageUrl.trim()) {
-      toast.error('请输入商品主图 URL');
+      toast.error('请上传商品主图');
       return;
     }
     const priceNum = Number(form.price);
@@ -198,16 +199,12 @@ const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="mainImageUrl">商品主图 URL</Label>
-            <Input
-              id="mainImageUrl"
-              name="mainImageUrl"
-              value={form.mainImageUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          <ImageUpload
+            label="商品主图"
+            value={form.mainImageUrl}
+            onChange={(url) => setForm((prev) => ({ ...prev, mainImageUrl: url }))}
+            aspectRatio="aspect-square"
+          />
           <div className="flex items-center justify-between">
             <Label htmlFor="status">上架状态</Label>
             <div className="flex items-center gap-2">

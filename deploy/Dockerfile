@@ -50,7 +50,7 @@ COPY deploy/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
 # 创建静态资源目录
-RUN mkdir -p shared/static
+RUN mkdir -p shared/static uploads
 
 EXPOSE 3000
 

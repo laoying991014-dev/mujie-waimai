@@ -5,6 +5,7 @@ import { Input } from '@client/src/components/ui/input';
 import { Textarea } from '@client/src/components/ui/textarea';
 import { Button } from '@client/src/components/ui/button';
 import { Label } from '@client/src/components/ui/label';
+import ImageUpload from '@client/src/components/ImageUpload';
 import { merchantSettings as settingsApi } from '@client/src/api';
 import type { ShopSettings } from '@shared/api.interface';
 
@@ -97,28 +98,18 @@ const MerchantSettingsPage: React.FC = () => {
               disabled={loading}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="shopLogoUrl">店铺Logo URL</Label>
-            <Input
-              id="shopLogoUrl"
-              name="shopLogoUrl"
-              value={form.shopLogoUrl}
-              onChange={handleChange}
-              placeholder="请输入Logo图片链接"
-              disabled={loading}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="shopCoverUrl">店铺封面URL</Label>
-            <Input
-              id="shopCoverUrl"
-              name="shopCoverUrl"
-              value={form.shopCoverUrl}
-              onChange={handleChange}
-              placeholder="请输入封面图链接"
-              disabled={loading}
-            />
-          </div>
+          <ImageUpload
+            label="店铺Logo"
+            value={form.shopLogoUrl}
+            onChange={(url) => setForm((prev) => ({ ...prev, shopLogoUrl: url }))}
+            aspectRatio="aspect-square"
+          />
+          <ImageUpload
+            label="店铺封面"
+            value={form.shopCoverUrl}
+            onChange={(url) => setForm((prev) => ({ ...prev, shopCoverUrl: url }))}
+            aspectRatio="aspect-video"
+          />
           <div className="space-y-2">
             <Label htmlFor="shopDescription">店铺介绍</Label>
             <Textarea

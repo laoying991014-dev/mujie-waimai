@@ -37,6 +37,7 @@ import {
   TableRow,
 } from '@client/src/components/ui/table';
 import Image from '@client/src/components/ui/image';
+import ImageUpload from '@client/src/components/ImageUpload';
 import {
   listUsers,
   createUser,
@@ -384,16 +385,14 @@ const AdminUsersPage: React.FC = () => {
                 />
               </div>
             )}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">头像URL（可选）</label>
-              <Input
-                value={formData.avatarUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, avatarUrl: e.target.value })
-                }
-                placeholder="请输入头像图片地址"
-              />
-            </div>
+            <ImageUpload
+              label="头像（可选）"
+              value={formData.avatarUrl}
+              onChange={(url) =>
+                setFormData({ ...formData, avatarUrl: url })
+              }
+              aspectRatio="aspect-square"
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

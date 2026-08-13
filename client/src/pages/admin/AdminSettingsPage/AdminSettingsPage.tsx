@@ -44,6 +44,7 @@ import {
   TableRow,
 } from '@client/src/components/ui/table';
 import Image from '@client/src/components/ui/image';
+import ImageUpload from '@client/src/components/ImageUpload';
 import {
   getSiteSettings,
   saveSiteSettings,
@@ -163,7 +164,7 @@ const AdminSettingsPage: React.FC = () => {
       return;
     }
     if (!bannerForm.imageUrl.trim()) {
-      toast.error('请填写活动图片URL');
+      toast.error('请上传活动图片');
       return;
     }
     setBannerSubmitting(true);
@@ -235,17 +236,17 @@ const AdminSettingsPage: React.FC = () => {
                     placeholder="请输入站点名称"
                   />
                 </div>
-                <div className="space-y-2 max-w-md">
-                  <label className="text-sm font-medium">站点Logo URL</label>
-                  <Input
+                <div className="space-y-2 max-w-xs">
+                  <ImageUpload
+                    label="站点Logo"
                     value={siteSettings.siteLogoUrl}
-                    onChange={(e) =>
+                    onChange={(url) =>
                       setSiteSettings({
                         ...siteSettings,
-                        siteLogoUrl: e.target.value,
+                        siteLogoUrl: url,
                       })
                     }
-                    placeholder="请输入Logo图片地址"
+                    aspectRatio="aspect-square"
                   />
                 </div>
                 <div className="space-y-2 max-w-md">
@@ -438,16 +439,14 @@ const AdminSettingsPage: React.FC = () => {
                 placeholder="请输入活动标题"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">图片URL</label>
-              <Input
-                value={bannerForm.imageUrl}
-                onChange={(e) =>
-                  setBannerForm({ ...bannerForm, imageUrl: e.target.value })
-                }
-                placeholder="请输入活动图片地址"
-              />
-            </div>
+            <ImageUpload
+              label="活动图片"
+              value={bannerForm.imageUrl}
+              onChange={(url) =>
+                setBannerForm({ ...bannerForm, imageUrl: url })
+              }
+              aspectRatio="aspect-video"
+            />
             <div className="space-y-2">
               <label className="text-sm font-medium">跳转链接</label>
               <Input
