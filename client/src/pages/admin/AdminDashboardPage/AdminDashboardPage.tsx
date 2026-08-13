@@ -7,6 +7,7 @@ import {
   Clock,
   UserPlus,
   ShoppingCart,
+  Truck,
 } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
@@ -190,7 +191,7 @@ const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* 快捷入口 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickCard
           label="待审核商家"
           value={overview?.pendingMerchantAudits ?? 0}
@@ -208,6 +209,12 @@ const AdminDashboardPage: React.FC = () => {
           value={overview?.todayNewOrders ?? 0}
           icon={ShoppingCart}
           color="bg-blue-500"
+        />
+        <QuickCard
+          label="今日配送费"
+          value={`¥${Number(overview?.todayDeliveryFee ?? 0).toFixed(2)}`}
+          icon={Truck}
+          color="bg-purple-500"
         />
       </div>
 

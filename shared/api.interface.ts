@@ -262,6 +262,7 @@ export interface AdminOverview {
   todayNewUsers: number;
   todayNewOrders: number;
   todayRevenue: string;
+  todayDeliveryFee: string;
   pendingMerchantAudits: number;
 }
 

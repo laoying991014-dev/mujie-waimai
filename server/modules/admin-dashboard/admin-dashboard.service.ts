@@ -19,6 +19,7 @@ export class AdminDashboardService {
       todayNewUsersResult,
       todayNewOrdersResult,
       todayRevenueResult,
+      todayDeliveryFeeResult,
       pendingAuditsResult,
     ] = await Promise.all([
       this.db.select({ count: count() }).from(appUser),
@@ -45,6 +46,15 @@ export class AdminDashboardService {
             sql`${orderInfo.status} != 'cancelled'`,
           ),
         ),
+      this.db
+        .select({ sum: sql<number>`COALESCE(SUM(${orderInfo.deliveryFee}), 0)`.as('sum') })
+        .from(orderInfo)
+        .where(
+          and(
+            sql`DATE(${orderInfo.createdAt}) = CURRENT_DATE`,
+            sql`${orderInfo.status} != 'cancelled'`,
+          ),
+        ),
       this.db.select({ count: count() }).from(merchant).where(eq(merchant.auditStatus, 'pending')),
     ]);
 
@@ -56,6 +66,7 @@ export class AdminDashboardService {
       todayNewUsers: Number(todayNewUsersResult[0]?.count ?? 0),
       todayNewOrders: Number(todayNewOrdersResult[0]?.count ?? 0),
       todayRevenue: String(todayRevenueResult[0]?.sum ?? 0),
+      todayDeliveryFee: String(todayDeliveryFeeResult[0]?.sum ?? 0),
       pendingMerchantAudits: Number(pendingAuditsResult[0]?.count ?? 0),
     };
   }
