@@ -98,4 +98,12 @@ export class AdminMerchantController {
   async remove(@Param('id') id: string): Promise<{ success: true }> {
     return this.adminMerchantService.remove(id);
   }
+
+  @Patch(':id/password')
+  async updatePassword(
+    @Param('id') id: string,
+    @Body() dto: { password: string },
+  ): Promise<{ success: true }> {
+    return this.adminMerchantService.updatePassword(id, dto.password);
+  }
 }

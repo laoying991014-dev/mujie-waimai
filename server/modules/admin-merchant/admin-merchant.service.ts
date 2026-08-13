@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
 import { count, eq, ilike, and, desc } from 'drizzle-orm';
@@ -214,6 +215,22 @@ export class AdminMerchantService {
       throw new NotFoundException('商家不存在');
     }
 
+    return { success: true };
+  }
+
+  async updatePassword(id: string, newPassword: string): Promise<{ success: true }> {
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('密码长度至少6位');
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const result = await this.db
+      .update(merchant)
+      .set({ password: hashedPassword })
+      .where(eq(merchant.id, id))
+      .returning({ id: merchant.id });
+    if (result.length === 0) {
+      throw new NotFoundException('商家不存在');
+    }
     return { success: true };
   }
 }

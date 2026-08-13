@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Search, Plus, Edit2, Trash2, Check, X, Power } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Check, X, Power, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@client/src/components/ui/button';
 import { Input } from '@client/src/components/ui/input';
@@ -45,6 +45,7 @@ import {
   auditMerchant,
   toggleMerchantStatus,
   deleteMerchant,
+  updateMerchantPassword,
 } from '@client/src/api/admin-merchant';
 import { getCategories } from '@client/src/api/home';
 import type { AdminMerchant, PaginatedResponse, CategoryItem } from '@shared/api.interface';
@@ -104,6 +105,11 @@ const AdminMerchantsPage: React.FC = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<AdminMerchant | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState<AdminMerchant | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -290,6 +296,36 @@ const AdminMerchantsPage: React.FC = () => {
     }
   };
 
+  const openPasswordDialog = (merchant: AdminMerchant): void => {
+    setPasswordTarget(merchant);
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordDialogOpen(true);
+  };
+
+  const handleUpdatePassword = async (): Promise<void> => {
+    if (!passwordTarget) return;
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('密码长度至少6位');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('两次输入的密码不一致');
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      await updateMerchantPassword(passwordTarget.id, newPassword);
+      toast.success('密码修改成功');
+      setPasswordDialogOpen(false);
+      setPasswordTarget(null);
+    } catch {
+      toast.error('密码修改失败');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   const getAuditBadgeClass = (status: string): string => {
@@ -455,6 +491,14 @@ const AdminMerchantsPage: React.FC = () => {
                             title="编辑"
                           >
                             <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openPasswordDialog(merchant)}
+                            title="修改密码"
+                          >
+                            <Key className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -695,6 +739,50 @@ const AdminMerchantsPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 修改密码对话框 */}
+      <Dialog open={passwordDialogOpen} onOpenChange={(v) => !v && setPasswordDialogOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>修改商家密码</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="text-sm text-muted-foreground">
+              正在修改商家「<span className="text-foreground font-medium">{passwordTarget?.shopName}</span>」的登录密码
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">新密码</label>
+              <Input
+                type="password"
+                placeholder="请输入新密码（至少6位）"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">确认密码</label>
+              <Input
+                type="password"
+                placeholder="请再次输入新密码"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleUpdatePassword}
+              disabled={passwordLoading}
+              className="bg-gradient-to-r from-[hsl(16_85%_58%)] to-[hsl(10_80%_52%)] border-0"
+            >
+              {passwordLoading ? '提交中...' : '确认修改'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

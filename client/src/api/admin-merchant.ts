@@ -72,3 +72,13 @@ export const deleteMerchant = async (id: string): Promise<{ success: true }> => 
   const res = await axiosForBackend.delete(`/api/admin/merchants/${id}`);
   return res.data;
 };
+
+export const updateMerchantPassword = async (
+  id: string,
+  password: string,
+): Promise<{ success: true }> => {
+  const res = await axiosForBackend.patch(`/api/admin/merchants/${id}/password`, {
+    password,
+  });
+  return res.data;
+};
