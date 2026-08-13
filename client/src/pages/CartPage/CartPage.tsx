@@ -270,7 +270,7 @@ const CartPage: React.FC = () => {
   const empty = !isLoggedIn || !cart || cart.items.length === 0;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-40">
       <TopBar />
 
       {/* Login prompt */}
@@ -451,7 +451,7 @@ const CartPage: React.FC = () => {
 
       {/* Bottom submit bar */}
       {!empty && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur border-t border-border/50">
+        <div className="fixed bottom-16 left-0 right-0 z-40 bg-card/95 backdrop-blur border-t border-border/50">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-baseline gap-1">
               <span className="text-sm text-muted-foreground">合计：</span>
