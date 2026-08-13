@@ -30,6 +30,7 @@ import AdminNoticesPage from './pages/admin/AdminNoticesPage/AdminNoticesPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage/AdminSettingsPage';
 
 const RoutesComponent = () => {
+  console.log('RoutesComponent 开始渲染');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,8 +49,11 @@ const RoutesComponent = () => {
     return () => window.removeEventListener('auth:logout', handleLogout);
   }, [navigate]);
 
+  console.log('RoutesComponent 准备渲染 Routes');
   return (
-    <Routes>
+    <div>
+      <div style={{ display: 'none' }}>RoutesComponent已渲染</div>
+      <Routes>
       <Route element={<UserLayout />}>
         <Route index element={<HomePage />} />
         <Route path="merchants" element={<MerchantListPage />} />
@@ -187,6 +191,7 @@ const RoutesComponent = () => {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </div>
   );
 };
 
