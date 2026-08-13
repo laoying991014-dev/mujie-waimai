@@ -22,6 +22,7 @@ import { AdminMerchantModule } from './modules/admin-merchant/admin-merchant.mod
 import { AdminProductModule } from './modules/admin-product/admin-product.module';
 import { AdminOrderModule } from './modules/admin-order/admin-order.module';
 import { AdminSettingModule } from './modules/admin-setting/admin-setting.module';
+import { DatabaseInitModule } from './modules/database-init/database-init.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AdminSettingModule } from './modules/admin-setting/admin-setting.module
       disableCsrf: true,
     } as any),
     SelfhostDatabaseModule,
+    DatabaseInitModule,
     // ====== @route-section: business-modules START ======
     AuthModule,
     HomeModule,
