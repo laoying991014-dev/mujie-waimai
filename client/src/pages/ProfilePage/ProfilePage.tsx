@@ -20,6 +20,7 @@ import { logger } from '@lark-apaas/client-toolkit/logger';
 import { Image } from '@client/src/components/ui/image';
 import { Button } from '@client/src/components/ui/button';
 import { Input } from '@client/src/components/ui/input';
+import { Textarea } from '@client/src/components/ui/textarea';
 import { Switch } from '@client/src/components/ui/switch';
 import ImageUpload from '@client/src/components/ImageUpload';
 import {
@@ -422,34 +423,11 @@ const ProfilePage: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Input
-                value={addressForm.province}
-                onChange={(e) =>
-                  setAddressForm((f) => ({ ...f, province: e.target.value }))
-                }
-                placeholder="省份"
-              />
-              <Input
-                value={addressForm.city}
-                onChange={(e) =>
-                  setAddressForm((f) => ({ ...f, city: e.target.value }))
-                }
-                placeholder="城市"
-              />
-              <Input
-                value={addressForm.district}
-                onChange={(e) =>
-                  setAddressForm((f) => ({ ...f, district: e.target.value }))
-                }
-                placeholder="区县"
-              />
-            </div>
             <div className="space-y-1.5">
               <label className="text-sm text-foreground font-medium">
-                详细地址
+                收货地址
               </label>
-              <Input
+              <Textarea
                 value={addressForm.detailAddress}
                 onChange={(e) =>
                   setAddressForm((f) => ({
@@ -457,7 +435,8 @@ const ProfilePage: React.FC = () => {
                     detailAddress: e.target.value,
                   }))
                 }
-                placeholder="街道、门牌号等"
+                placeholder="请输入完整收货地址，如：木姐市XX路XX号"
+                rows={3}
               />
             </div>
             <div className="flex items-center justify-between pt-1">
@@ -577,9 +556,6 @@ const AddressCard: React.FC<AddressCardProps> = ({
       )}
     </div>
     <div className="text-sm text-foreground/80 mb-3 break-words">
-      {address.province}
-      {address.city}
-      {address.district}
       {address.detailAddress}
     </div>
     <div className="flex items-center justify-between pt-2 border-t border-border/50">

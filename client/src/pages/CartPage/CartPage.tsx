@@ -314,7 +314,6 @@ const CartPage: React.FC = () => {
                 )}
               </div>
               <div className="text-sm text-muted-foreground mt-0.5 truncate">
-                {selectedAddress.province} {selectedAddress.city} {selectedAddress.district}{' '}
                 {selectedAddress.detailAddress}
               </div>
             </div>
@@ -577,7 +576,7 @@ const AddressListDialog: React.FC<AddressListDialogProps> = ({
                 )}
               </div>
               <div className="text-sm text-muted-foreground mt-1">
-                {addr.province} {addr.city} {addr.district} {addr.detailAddress}
+                {addr.detailAddress}
               </div>
               <div className="flex items-center justify-between mt-2">
                 <div
@@ -638,9 +637,6 @@ const AddressEditDialog: React.FC<AddressEditDialogProps> = ({
 }) => {
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
-  const [province, setProvince] = useState('');
-  const [city, setCity] = useState('');
-  const [district, setDistrict] = useState('');
   const [detailAddress, setDetailAddress] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [error, setError] = useState('');
@@ -650,17 +646,11 @@ const AddressEditDialog: React.FC<AddressEditDialogProps> = ({
       if (editing) {
         setReceiverName(editing.receiverName);
         setReceiverPhone(editing.receiverPhone);
-        setProvince(editing.province);
-        setCity(editing.city);
-        setDistrict(editing.district);
         setDetailAddress(editing.detailAddress);
         setIsDefault(editing.isDefault);
       } else {
         setReceiverName('');
         setReceiverPhone('');
-        setProvince('');
-        setCity('');
-        setDistrict('');
         setDetailAddress('');
         setIsDefault(false);
       }
@@ -670,15 +660,14 @@ const AddressEditDialog: React.FC<AddressEditDialogProps> = ({
 
   const handleSubmit = (): void => {
     if (!receiverName.trim()) return setError('请输入收货人姓名');
-    if (!/^1[3-9]\d{9}$/.test(receiverPhone.trim())) return setError('请输入正确的手机号');
-    if (!province.trim() || !city.trim() || !district.trim()) return setError('请填写省市区');
-    if (!detailAddress.trim()) return setError('请输入详细地址');
+    if (!/^(1[3-9]\d{9}|09\d{8})$/.test(receiverPhone.trim())) return setError('请输入正确的手机号');
+    if (!detailAddress.trim()) return setError('请输入收货地址');
     onSave({
       receiverName: receiverName.trim(),
       receiverPhone: receiverPhone.trim(),
-      province: province.trim(),
-      city: city.trim(),
-      district: district.trim(),
+      province: '',
+      city: '',
+      district: '',
       detailAddress: detailAddress.trim(),
       isDefault,
     });
@@ -699,23 +688,14 @@ const AddressEditDialog: React.FC<AddressEditDialogProps> = ({
             <label className="text-xs text-muted-foreground mb-1 block">手机号</label>
             <Input value={receiverPhone} onChange={(e) => setReceiverPhone(e.target.value)} placeholder="请输入手机号" maxLength={11} />
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">省</label>
-              <Input value={province} onChange={(e) => setProvince(e.target.value)} placeholder="省" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">市</label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="市" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">区</label>
-              <Input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="区" />
-            </div>
-          </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">详细地址</label>
-            <Input value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} placeholder="街道、门牌号等" />
+            <label className="text-xs text-muted-foreground mb-1 block">收货地址</label>
+            <Textarea
+              value={detailAddress}
+              onChange={(e) => setDetailAddress(e.target.value)}
+              placeholder="请输入完整收货地址，如：木姐市XX路XX号"
+              rows={3}
+            />
           </div>
           <div className="flex items-center justify-between pt-1">
             <span className="text-sm text-foreground">设为默认地址</span>
