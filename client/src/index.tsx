@@ -26,15 +26,20 @@ const SimpleErrorFallback = ({ error }: { error: Error }) => (
 const MainApp = () => {
   console.log('MainApp 开始渲染，RoutesComponent 类型:', typeof RoutesComponent);
   return (
-    <ErrorBoundary fallbackRender={({ error }) => {
-      console.error('ErrorBoundary 捕获到错误:', error);
-      return <SimpleErrorFallback error={error} />;
-    }}>
-      <BrowserRouter basename={CLIENT_BASE_PATH}>
-        <RoutesComponent />
-        {createPortal(<Toaster />, document.body)}
-      </BrowserRouter>
-    </ErrorBoundary>
+    <div>
+      <div style={{ padding: '10px', background: 'green', color: 'white' }}>
+        MainApp 渲染成功（BrowserRouter 外部）
+      </div>
+      <ErrorBoundary fallbackRender={({ error }) => {
+        console.error('ErrorBoundary 捕获到错误:', error);
+        return <SimpleErrorFallback error={error} />;
+      }}>
+        <BrowserRouter basename={CLIENT_BASE_PATH}>
+          <RoutesComponent />
+          {createPortal(<Toaster />, document.body)}
+        </BrowserRouter>
+      </ErrorBoundary>
+    </div>
   );
 };
 
