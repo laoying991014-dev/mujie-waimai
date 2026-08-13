@@ -22,4 +22,9 @@ else
 fi
 
 echo "启动应用服务..."
+# 禁用 CSRF 保护（自建环境下不需要）
+export ENABLE_CSRF=false
+export DISABLE_CSRF=true
+export FORCE_FRAMEWORK_DISABLE_CSRF=true
+export CSRF_ENABLED=false
 exec node dist/server/main.js
