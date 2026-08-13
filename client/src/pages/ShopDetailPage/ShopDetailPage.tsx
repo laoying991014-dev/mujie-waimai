@@ -15,6 +15,8 @@ import { Image } from '@client/src/components/ui/image';
 import { Skeleton } from '@client/src/components/ui/skeleton';
 import { Badge } from '@client/src/components/ui/badge';
 import * as shopApi from '@client/src/api/shop';
+import * as cartApi from '@client/src/api/cart';
+import { useAuthStore } from '@client/src/store/auth';
 import {
   useCartStore,
   selectTotalCount,
@@ -47,8 +49,10 @@ const ShopDetailPage: React.FC = () => {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const clearCart = useCartStore((s) => s.clearCart);
+  const setCartItemId = useCartStore((s) => s.setCartItemId);
   const items = useCartStore((s) => s.items);
   const cartMerchantId = useCartStore((s) => s.merchantId);
+  const token = useAuthStore((s) => s.token);
 
   // Group products by category
   const productsByCategory = useMemo(() => {
@@ -128,7 +132,7 @@ const ShopDetailPage: React.FC = () => {
     container.scrollTo({ top: targetScroll, behavior: 'smooth' });
   };
 
-  const handleAddToCart = (product: ProductItem): void => {
+  const handleAddToCart = async (product: ProductItem): Promise<void> => {
     if (!shop) return;
     addItem({
       id: product.id,
@@ -137,6 +141,52 @@ const ShopDetailPage: React.FC = () => {
       price: product.price,
       merchantId: shop.id,
     });
+    // 如果已登录，同步到后端购物车
+    if (token) {
+      try {
+        const result = await cartApi.addToCart(product.id, 1);
+        setCartItemId(product.id, result.id);
+      } catch (err) {
+        logger.error('同步购物车到后端失败', JSON.stringify(err));
+      }
+    }
+  };
+
+  const handleUpdateQuantity = async (productId: string, quantity: number): Promise<void> => {
+    const item = items.find((it) => it.id === productId);
+    updateQuantity(productId, quantity);
+    // 如果已登录且有后端购物车项ID，同步到后端
+    if (token && item?.cartItemId) {
+      try {
+        await cartApi.updateCartItem(item.cartItemId, quantity);
+      } catch (err) {
+        logger.error('更新购物车数量失败', JSON.stringify(err));
+      }
+    }
+  };
+
+  const handleRemoveItem = async (productId: string): Promise<void> => {
+    const item = items.find((it) => it.id === productId);
+    removeItem(productId);
+    // 如果已登录且有后端购物车项ID，同步到后端
+    if (token && item?.cartItemId) {
+      try {
+        await cartApi.removeCartItem(item.cartItemId);
+      } catch (err) {
+        logger.error('删除购物车项失败', JSON.stringify(err));
+      }
+    }
+  };
+
+  const handleClearCart = async (): Promise<void> => {
+    clearCart();
+    if (token) {
+      try {
+        await cartApi.clearCart();
+      } catch (err) {
+        logger.error('清空购物车失败', JSON.stringify(err));
+      }
+    }
   };
 
   const handleCheckout = (): void => {
@@ -231,7 +281,7 @@ const ShopDetailPage: React.FC = () => {
                           product={p}
                           merchantId={shop?.id ?? ''}
                           onAdd={() => handleAddToCart(p)}
-                          onUpdate={(q) => updateQuantity(p.id, q)}
+                          onUpdate={(q) => handleUpdateQuantity(p.id, q)}
                         />
                       ))}
                     </div>
@@ -258,9 +308,9 @@ const ShopDetailPage: React.FC = () => {
         open={drawerOpen}
         items={items}
         onClose={() => setDrawerOpen(false)}
-        onUpdateQuantity={updateQuantity}
-        onRemove={removeItem}
-        onClear={clearCart}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemove={handleRemoveItem}
+        onClear={handleClearCart}
         onCheckout={handleCheckout}
       />
     </div>

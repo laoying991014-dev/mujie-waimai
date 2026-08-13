@@ -8,6 +8,7 @@ export interface CartProduct {
   price: string;
   merchantId: string;
   quantity: number;
+  cartItemId?: string; // 后端购物车项ID
 }
 
 interface CartState {
@@ -17,6 +18,7 @@ interface CartState {
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  setCartItemId: (productId: string, cartItemId: string) => void;
 }
 
 const computeTotalCount = (items: CartProduct[]): number =>
@@ -77,6 +79,13 @@ export const useCartStore = create<CartState>()(
         });
       },
       clearCart: () => set({ items: [], merchantId: null }),
+      setCartItemId: (productId, cartItemId) => {
+        set({
+          items: get().items.map((it: CartProduct) =>
+            it.id === productId ? { ...it, cartItemId } : it,
+          ),
+        });
+      },
     }),
     {
       name: 'mujie-cart-storage',
