@@ -1,37 +1,23 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { ErrorBoundary } from 'react-error-boundary';
-import RoutesComponent from './app.tsx';
-import './index.css';
-import { createPortal } from 'react-dom';
-import { Toaster } from '@client/src/components/ui/sonner';
+import HomePage from './pages/HomePage/HomePage';
 
-const CLIENT_BASE_PATH = process.env.CLIENT_BASE_PATH || '/';
+console.log('=== 测试 HomePage（API已修复）===');
 
-const SimpleErrorFallback = ({ error }: { error: Error }) => (
-  <div style={{ padding: '20px', color: 'red', fontFamily: 'sans-serif' }}>
-    <h2>应用出错了</h2>
-    <pre style={{ background: '#f5f5f5', padding: '10px', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-      {error.message}
-      {'\n'}
-      {error.stack}
-    </pre>
-  </div>
-);
-
-const MainApp = () => {
+const TestApp = () => {
   return (
-    <ErrorBoundary fallbackRender={({ error }) => <SimpleErrorFallback error={error} />}>
-      <BrowserRouter basename={CLIENT_BASE_PATH}>
-        <RoutesComponent />
-        {createPortal(<Toaster />, document.body)}
-      </BrowserRouter>
-    </ErrorBoundary>
+    <BrowserRouter>
+      <div className="min-h-screen bg-background p-4">
+        <h2 className="text-xl font-bold mb-4 text-foreground">下面是 HomePage 内容：</h2>
+        <HomePage />
+      </div>
+    </BrowserRouter>
   );
 };
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  createRoot(rootElement).render(<MainApp />);
+  createRoot(rootElement).render(<TestApp />);
+  console.log('HomePage 测试页面渲染完成');
 }
