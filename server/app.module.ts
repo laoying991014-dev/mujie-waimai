@@ -25,7 +25,11 @@ import { AdminSettingModule } from './modules/admin-setting/admin-setting.module
 
 @Module({
   imports: [
-    PlatformModule.forRoot(),
+    PlatformModule.forRoot({
+      csrf: false,
+      enableCsrf: false,
+      disableCsrf: true,
+    } as any),
     SelfhostDatabaseModule,
     // ====== @route-section: business-modules START ======
     AuthModule,
