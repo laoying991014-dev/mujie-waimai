@@ -7,6 +7,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'client/src'),
     },
   },
+  css: {
+    postcss: './postcss.config.js',
+  },
   build: {
     outDir: 'dist/client',
     emptyOutDir: true,
