@@ -24,6 +24,7 @@ import {
   DialogClose,
 } from '@client/src/components/ui/dialog';
 import { useAuthStore } from '@client/src/store/auth';
+import { useCartStore } from '@client/src/store/cart';
 import * as cartApi from '@client/src/api/cart';
 import * as addressApi from '@client/src/api/address';
 import * as orderApi from '@client/src/api/order';
@@ -46,6 +47,8 @@ const CartPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const isLoggedIn = Boolean(token);
+  const localCartItems = useCartStore((s) => s.items);
+  const clearLocalCart = useCartStore((s) => s.clearCart);
 
   /* ---------- Load data ---------- */
   useEffect(() => {
@@ -54,10 +57,19 @@ const CartPage: React.FC = () => {
       setLoading(true);
       try {
         if (isLoggedIn) {
-          const [cartRes, addrRes] = await Promise.all([
-            cartApi.getCart(),
-            addressApi.getAddresses(),
-          ]);
+          let cartRes = await cartApi.getCart();
+          // 如果后端购物车为空但本地有数据，自动同步到后端
+          if (cartRes.items.length === 0 && localCartItems.length > 0) {
+            for (const item of localCartItems) {
+              await cartApi.addToCart(item.id, item.quantity);
+            }
+            // 重新获取后端购物车
+            cartRes = await cartApi.getCart();
+            // 清空本地购物车，避免重复
+            clearLocalCart();
+          }
+          if (cancelled) return;
+          const addrRes = await addressApi.getAddresses();
           if (cancelled) return;
           setCart(cartRes);
           setAddresses(addrRes.items);
