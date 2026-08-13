@@ -7,11 +7,6 @@ import './index.css';
 import { createPortal } from 'react-dom';
 import { Toaster } from '@client/src/components/ui/sonner';
 
-console.log('=== 木姐外卖前端启动 ===');
-console.log('导入的 RoutesComponent:', RoutesComponent, typeof RoutesComponent);
-
-const CLIENT_BASE_PATH = process.env.CLIENT_BASE_PATH || '/';
-
 const SimpleErrorFallback = ({ error }: { error: Error }) => (
   <div style={{ padding: '20px', color: 'red', fontFamily: 'sans-serif' }}>
     <h2>应用出错了</h2>
@@ -24,19 +19,17 @@ const SimpleErrorFallback = ({ error }: { error: Error }) => (
 );
 
 const MainApp = () => {
-  console.log('MainApp 开始渲染，RoutesComponent 类型:', typeof RoutesComponent);
   return (
-    <div>
+    <ErrorBoundary fallbackRender={({ error }) => <SimpleErrorFallback error={error} />}>
       <HashRouter>
         <RoutesComponent />
+        {createPortal(<Toaster />, document.body)}
       </HashRouter>
-    </div>
+    </ErrorBoundary>
   );
 };
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  console.log('找到 root 元素，开始渲染');
   createRoot(rootElement).render(<MainApp />);
-  console.log('render 调用完成');
 }
