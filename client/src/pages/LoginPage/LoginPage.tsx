@@ -101,7 +101,7 @@ const LoginPage: React.FC = () => {
                     <Input
                       id="login-phone"
                       type="tel"
-                      placeholder="请输入手机号"
+                      placeholder="请输入缅甸手机号 09xxxxxxxxx"
                       className="pl-10"
                       value={loginForm.phone}
                       onChange={(e) =>
@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
                     <Input
                       id="reg-phone"
                       type="tel"
-                      placeholder="请输入手机号"
+                      placeholder="请输入缅甸手机号 09xxxxxxxxx"
                       className="pl-10"
                       value={registerForm.phone}
                       onChange={(e) =>
