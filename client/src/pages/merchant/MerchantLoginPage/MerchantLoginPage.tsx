@@ -101,7 +101,7 @@ const MerchantLoginPage: React.FC = () => {
             </Link>
           </div>
           <p className="text-xs text-muted-foreground text-center">
-            测试账号：xiangwei / 密码：123456
+            测试账号：xiangwei / 密码：merchant123
           </p>
         </div>
       </div>
