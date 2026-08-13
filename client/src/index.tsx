@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import RoutesComponent from './app.tsx';
 import './index.css';
@@ -27,10 +27,9 @@ const MainApp = () => {
   console.log('MainApp 开始渲染，RoutesComponent 类型:', typeof RoutesComponent);
   return (
     <div>
-      <div style={{ padding: '10px', background: 'green', color: 'white' }}>
-        MainApp 渲染成功（BrowserRouter 外部）
-      </div>
-      <RoutesComponent />
+      <HashRouter>
+        <RoutesComponent />
+      </HashRouter>
     </div>
   );
 };
