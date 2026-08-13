@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { Toaster } from '@client/src/components/ui/sonner';
 
 console.log('=== 木姐外卖前端启动 ===');
+console.log('导入的 RoutesComponent:', RoutesComponent, typeof RoutesComponent);
 
 const CLIENT_BASE_PATH = process.env.CLIENT_BASE_PATH || '/';
 
@@ -23,7 +24,7 @@ const SimpleErrorFallback = ({ error }: { error: Error }) => (
 );
 
 const MainApp = () => {
-  console.log('MainApp 开始渲染');
+  console.log('MainApp 开始渲染，RoutesComponent 类型:', typeof RoutesComponent);
   return (
     <ErrorBoundary fallbackRender={({ error }) => {
       console.error('ErrorBoundary 捕获到错误:', error);
