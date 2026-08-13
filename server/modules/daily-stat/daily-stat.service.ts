@@ -36,8 +36,8 @@ export class DailyStatService {
           .where(
             and(
               eq(orderInfo.merchantId, m.id),
-              gte(orderInfo.createdAt, `${targetDate} 00:00:00`),
-              lte(orderInfo.createdAt, `${targetDate} 23:59:59`),
+              gte(orderInfo.createdAt, new Date(`${targetDate}T00:00:00`)),
+              lte(orderInfo.createdAt, new Date(`${targetDate}T23:59:59`)),
             ),
           );
 
