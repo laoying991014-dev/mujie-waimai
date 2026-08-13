@@ -30,9 +30,7 @@ const MainApp = () => {
       <div style={{ padding: '10px', background: 'green', color: 'white' }}>
         MainApp 渲染成功（BrowserRouter 外部）
       </div>
-      <BrowserRouter basename={CLIENT_BASE_PATH}>
-        <RoutesComponent />
-      </BrowserRouter>
+      <RoutesComponent />
     </div>
   );
 };
