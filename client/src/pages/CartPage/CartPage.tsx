@@ -61,7 +61,12 @@ const CartPage: React.FC = () => {
           // 如果后端购物车为空但本地有数据，自动同步到后端
           if (cartRes.items.length === 0 && localCartItems.length > 0) {
             for (const item of localCartItems) {
-              await cartApi.addToCart(item.id, item.quantity);
+              try {
+                await cartApi.addToCart(item.id, item.quantity);
+              } catch (syncErr) {
+                // 单个商品同步失败不影响整体，跳过该商品
+                logger.error('同步单个商品到购物车失败', JSON.stringify(syncErr));
+              }
             }
             // 重新获取后端购物车
             cartRes = await cartApi.getCart();
@@ -247,6 +252,7 @@ const CartPage: React.FC = () => {
     try {
       const result = await orderApi.createOrder(selectedAddressId, remark.trim() || undefined);
       await cartApi.clearCart();
+      clearLocalCart(); // 同时清空本地购物车
       toast.success('下单成功');
       navigate(`/orders/${result.orderId}`);
     } catch (err) {
