@@ -123,6 +123,20 @@ export class RiderOrderService {
 
   // 骑手抢单
   async acceptOrder(riderId: string, orderId: string): Promise<{ success: true; status: string }> {
+    // 检查骑手是否有进行中的订单（preparing 或 delivering）
+    const activeOrderCount = await this.db
+      .select({ count: count() })
+      .from(orderInfo)
+      .where(
+        and(
+          eq(orderInfo.riderId, riderId),
+          inArray(orderInfo.status, ['preparing', 'delivering']),
+        ),
+      );
+    if (Number(activeOrderCount[0]?.count ?? 0) > 0) {
+      throw new BadRequestException('您有正在配送的订单，请完成后再抢新单');
+    }
+
     // 检查订单是否存在且状态为待接单
     const orderRows = await this.db
       .select({ id: orderInfo.id, status: orderInfo.status, riderId: orderInfo.riderId })

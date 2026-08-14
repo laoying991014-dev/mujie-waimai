@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Bike, MapPin, Clock, RefreshCw, Phone, Store } from 'lucide-react';
-import { riderApi, type RiderOrder } from '../../../api/rider';
+import { Bike, MapPin, Clock, RefreshCw, Phone, Store, AlertCircle, ArrowRight } from 'lucide-react';
+import { riderApi, type RiderOrder, type RiderStats } from '../../../api/rider';
 import { Button } from '@client/src/components/ui/button';
 import { Card } from '@client/src/components/ui/card';
 import { Badge } from '@client/src/components/ui/badge';
@@ -13,6 +13,7 @@ const RiderHallPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [riderStats, setRiderStats] = useState<RiderStats | null>(null);
 
   const loadOrders = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -21,8 +22,12 @@ const RiderHallPage: React.FC = () => {
       setLoading(true);
     }
     try {
-      const res = await riderApi.getPendingOrders(1, 50);
-      setOrders(res.items || []);
+      const [ordersRes, statsRes] = await Promise.all([
+        riderApi.getPendingOrders(1, 50),
+        riderApi.getStats(),
+      ]);
+      setOrders(ordersRes.items || []);
+      setRiderStats(statsRes);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || '加载订单失败');
     } finally {
@@ -86,6 +91,30 @@ const RiderHallPage: React.FC = () => {
       </div>
 
       <div className="max-w-2xl mx-auto p-4 space-y-3">
+        {/* 有进行中订单时的提示 */}
+        {riderStats && riderStats.currentOrderCount > 0 && (
+          <Card className="p-4 bg-orange-50 border-orange-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-orange-800">您有 {riderStats.currentOrderCount} 个订单正在配送中</p>
+                  <p className="text-xs text-orange-600 mt-0.5">请完成当前订单后再抢新单</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/rider/orders')}
+                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+              >
+                查看订单
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">加载中...</div>
         ) : orders.length === 0 ? (
@@ -163,9 +192,13 @@ const RiderHallPage: React.FC = () => {
                 className="w-full"
                 size="lg"
                 onClick={() => handleAccept(order.id)}
-                disabled={acceptingId === order.id}
+                disabled={acceptingId === order.id || (riderStats?.currentOrderCount ?? 0) > 0}
               >
-                {acceptingId === order.id ? '抢单中...' : '立即抢单'}
+                {(riderStats?.currentOrderCount ?? 0) > 0
+                  ? '配送中，请先完成当前订单'
+                  : acceptingId === order.id
+                    ? '抢单中...'
+                    : '立即抢单'}
               </Button>
             </Card>
           ))
