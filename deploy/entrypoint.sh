@@ -49,6 +49,11 @@ else
   echo "rider 表已存在，跳过迁移"
 fi
 
+# 重置管理员密码（确保可以登录）
+echo "重置管理员密码..."
+psql "$DATABASE_URL" -f /app/deploy/sql/05_reset_passwords.sql 2>&1
+echo "管理员密码重置完成"
+
 echo "启动应用服务..."
 
 # 禁用 CSRF 保护（自建环境下不需要）
