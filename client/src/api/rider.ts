@@ -1,4 +1,4 @@
-import { axios } from './axios';
+import { axiosForBackend } from '@client/src/api';
 
 export interface RiderInfo {
   id: string;
@@ -60,61 +60,61 @@ export interface RiderStats {
 export const riderApi = {
   // 骑手登录
   login: async (account: string, password: string) => {
-    const res = await axios.post('/api/auth/rider/login', { account, password });
+    const res = await axiosForBackend.post('/api/auth/rider/login', { account, password });
     return res.data;
   },
 
   // 骑手注册
   register: async (account: string, password: string, name: string, phone: string) => {
-    const res = await axios.post('/api/auth/rider/register', { account, password, name, phone });
+    const res = await axiosForBackend.post('/api/auth/rider/register', { account, password, name, phone });
     return res.data;
   },
 
   // 获取待接单订单列表
   getPendingOrders: async (page = 1, pageSize = 20) => {
-    const res = await axios.get('/api/rider/orders/pending', { params: { page, pageSize } });
+    const res = await axiosForBackend.get('/api/rider/orders/pending', { params: { page, pageSize } });
     return res.data;
   },
 
   // 抢单
   acceptOrder: async (orderId: string) => {
-    const res = await axios.post(`/api/rider/orders/${orderId}/accept`);
+    const res = await axiosForBackend.post(`/api/rider/orders/${orderId}/accept`);
     return res.data;
   },
 
   // 取餐
   pickupOrder: async (orderId: string) => {
-    const res = await axios.post(`/api/rider/orders/${orderId}/pickup`);
+    const res = await axiosForBackend.post(`/api/rider/orders/${orderId}/pickup`);
     return res.data;
   },
 
   // 送达
   deliverOrder: async (orderId: string) => {
-    const res = await axios.post(`/api/rider/orders/${orderId}/deliver`);
+    const res = await axiosForBackend.post(`/api/rider/orders/${orderId}/deliver`);
     return res.data;
   },
 
   // 获取骑手订单列表
   getMyOrders: async (page = 1, pageSize = 20, status?: string) => {
-    const res = await axios.get('/api/rider/orders', { params: { page, pageSize, status } });
+    const res = await axiosForBackend.get('/api/rider/orders', { params: { page, pageSize, status } });
     return res.data;
   },
 
   // 获取订单详情
   getOrderDetail: async (orderId: string) => {
-    const res = await axios.get(`/api/rider/orders/${orderId}`);
+    const res = await axiosForBackend.get(`/api/rider/orders/${orderId}`);
     return res.data;
   },
 
   // 更新在线状态
   updateOnlineStatus: async (onlineStatus: string) => {
-    const res = await axios.post('/api/rider/online-status', { onlineStatus });
+    const res = await axiosForBackend.post('/api/rider/online-status', { onlineStatus });
     return res.data;
   },
 
   // 获取骑手统计信息
   getStats: async () => {
-    const res = await axios.get('/api/rider/stats');
+    const res = await axiosForBackend.get('/api/rider/stats');
     return res.data;
   },
 };
