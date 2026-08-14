@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   BarChart3,
+  Bike,
 } from 'lucide-react';
 import Logo from './Logo';
 import { useAuthStore } from '../store/auth';
@@ -22,6 +23,7 @@ const AdminLayout: React.FC = () => {
     { path: '/admin/dashboard', icon: LayoutDashboard, label: '数据概览' },
     { path: '/admin/users', icon: Users, label: '用户管理' },
     { path: '/admin/merchants', icon: Store, label: '商家管理' },
+    { path: '/admin/riders', icon: Bike, label: '骑手管理' },
     { path: '/admin/products', icon: Package, label: '商品管理' },
     { path: '/admin/orders', icon: ClipboardList, label: '订单管理' },
     { path: '/admin/daily-stats', icon: BarChart3, label: '配送费统计' },

@@ -23,6 +23,7 @@ import AdminLoginPage from './pages/admin/AdminLoginPage/AdminLoginPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage/AdminUsersPage';
 import AdminMerchantsPage from './pages/admin/AdminMerchantsPage/AdminMerchantsPage';
+import AdminRidersPage from './pages/admin/AdminRidersPage/AdminRidersPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage/AdminProductsPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage/AdminOrdersPage';
 import AdminNoticesPage from './pages/admin/AdminNoticesPage/AdminNoticesPage';
@@ -188,6 +189,14 @@ const RoutesComponent = () => {
           element={
             <ProtectedRoute role="admin">
               <AdminMerchantsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="riders"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminRidersPage />
             </ProtectedRoute>
           }
         />
