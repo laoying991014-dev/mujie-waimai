@@ -258,7 +258,7 @@ export class AdminRiderService {
       totalRiders: Number(totalResult[0]?.count ?? 0),
       activeRiders: Number(activeResult[0]?.count ?? 0),
       onlineRiders: Number(onlineResult[0]?.count ?? 0),
-      totalOrders: Number(orderStats[0]?.count ?? 0),
+      totalOrders: Number(orderStats[0]?.totalOrders ?? 0),
       totalDeliveryFee: totalDeliveryFee.toFixed(2),
     };
   }
