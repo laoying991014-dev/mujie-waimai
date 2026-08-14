@@ -251,7 +251,7 @@ const RiderOrderDetailPage: React.FC = () => {
       </div>
 
       {/* 底部操作按钮 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-20">
+      <div className="fixed bottom-16 left-0 right-0 bg-background border-t p-4 z-20">
         <div className="max-w-2xl mx-auto">
           {order.status === 'preparing' && (
             <Button
