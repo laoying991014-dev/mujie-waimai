@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@client/src/components/ui/button';
@@ -209,6 +210,15 @@ const AdminOrdersPage: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">订单管理</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchData()}
+          disabled={loading}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          刷新
+        </Button>
       </div>
 
       {/* 筛选栏 */}
@@ -411,6 +421,8 @@ const AdminOrdersPage: React.FC = () => {
               {/* 商家信息 */}
               <Section title="商家信息">
                 <InfoRow label="商家名称" value={detail.merchantName} />
+                <InfoRow label="联系电话" value={detail.merchantPhone || '-'} />
+                <InfoRow label="商家地址" value={detail.merchantAddress || '-'} />
               </Section>
 
               {/* 商品明细 */}

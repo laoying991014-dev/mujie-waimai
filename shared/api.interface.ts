@@ -326,6 +326,8 @@ export interface AdminOrderDetail {
   orderNo: string;
   merchantId: string;
   merchantName: string;
+  merchantPhone: string;
+  merchantAddress: string;
   userId: string;
   userName: string;
   userPhone: string;

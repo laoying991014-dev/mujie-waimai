@@ -60,18 +60,24 @@ const CartPage: React.FC = () => {
           let cartRes = await cartApi.getCart();
           // 如果后端购物车为空但本地有数据，自动同步到后端
           if (cartRes.items.length === 0 && localCartItems.length > 0) {
+            let syncSuccessCount = 0;
             for (const item of localCartItems) {
               try {
                 await cartApi.addToCart(item.id, item.quantity);
+                syncSuccessCount++;
               } catch (syncErr) {
                 // 单个商品同步失败不影响整体，跳过该商品
                 logger.error('同步单个商品到购物车失败', JSON.stringify(syncErr));
               }
             }
-            // 重新获取后端购物车
-            cartRes = await cartApi.getCart();
-            // 清空本地购物车，避免重复
-            clearLocalCart();
+            if (syncSuccessCount > 0) {
+              // 至少有一个商品同步成功，重新获取后端购物车并清空本地
+              cartRes = await cartApi.getCart();
+              clearLocalCart();
+            } else {
+              // 全部同步失败，提示用户
+              toast.error('购物车商品同步失败，请重试');
+            }
           }
           if (cancelled) return;
           const addrRes = await addressApi.getAddresses();
