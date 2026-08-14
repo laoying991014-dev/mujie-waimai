@@ -182,6 +182,34 @@ export const orderItem = pgTable("order_item", {
   }),
 ]);
 
+// 骑手表
+export const rider = pgTable("rider", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  account: varchar("account", { length: 50 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  name: varchar("name", { length: 50 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  avatarUrl: text("avatar_url").notNull().default(''),
+  idCard: varchar("id_card", { length: 20 }).notNull().default(''),
+  status: varchar("status", { length: 20 }).notNull().default('active'),
+  onlineStatus: varchar("online_status", { length: 20 }).notNull().default('offline'),
+  currentOrderCount: integer("current_order_count").notNull().default(0),
+  totalOrders: integer("total_orders").notNull().default(0),
+  totalDeliveryFee: numeric("total_delivery_fee").notNull().default('0'),
+  rating: numeric("rating").notNull().default('5.0'),
+  auditStatus: varchar("audit_status", { length: 20 }).notNull().default('approved'),
+  auditReason: varchar("audit_reason", { length: 255 }).notNull().default(''),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("rider_account_key").on(table.account),
+  index("idx_rider_status").on(table.status),
+  index("idx_rider_online_status").on(table.onlineStatus),
+  index("idx_rider_audit_status").on(table.auditStatus),
+]);
+
 export const orderInfo = pgTable("order_info", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderNo: varchar("order_no", { length: 32 }).notNull().unique(),
@@ -424,6 +452,7 @@ export const orderItemTable = orderItem;
 export const productTable = product;
 export const productCategoryTable = productCategory;
 export const siteSettingTable = siteSetting;
+export const riderTable = rider;
 
 // 商家每日统计表
 export const merchantDailyStat = pgTable("merchant_daily_stat", {
@@ -439,33 +468,4 @@ export const merchantDailyStat = pgTable("merchant_daily_stat", {
   uniqueIndex("merchant_daily_stat_merchant_date_key").on(table.merchantId, table.statDate),
 ]);
 
-// 骑手表
-export const rider = pgTable("rider", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  account: varchar("account", { length: 50 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
-  name: varchar("name", { length: 50 }).notNull(),
-  phone: varchar("phone", { length: 20 }).notNull(),
-  avatarUrl: text("avatar_url").notNull().default(''),
-  idCard: varchar("id_card", { length: 20 }).notNull().default(''),
-  status: varchar("status", { length: 20 }).notNull().default('active'),
-  onlineStatus: varchar("online_status", { length: 20 }).notNull().default('offline'),
-  currentOrderCount: integer("current_order_count").notNull().default(0),
-  totalOrders: integer("total_orders").notNull().default(0),
-  totalDeliveryFee: numeric("total_delivery_fee").notNull().default('0'),
-  rating: numeric("rating").notNull().default('5.0'),
-  auditStatus: varchar("audit_status", { length: 20 }).notNull().default('approved'),
-  auditReason: varchar("audit_reason", { length: 255 }).notNull().default(''),
-  // System field: Creation time (auto-filled, do not modify)
-  createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  // System field: Update time (auto-filled, do not modify)
-  updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [
-  uniqueIndex("rider_account_key").on(table.account),
-  index("idx_rider_status").on(table.status),
-  index("idx_rider_online_status").on(table.onlineStatus),
-  index("idx_rider_audit_status").on(table.auditStatus),
-]);
-
-export const riderTable = rider;
 export const merchantDailyStatTable = merchantDailyStat;
