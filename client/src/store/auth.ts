@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type AuthRole = 'user' | 'merchant' | 'admin';
+export type AuthRole = 'user' | 'merchant' | 'admin' | 'rider';
 
 interface AuthState {
   token: string | null;

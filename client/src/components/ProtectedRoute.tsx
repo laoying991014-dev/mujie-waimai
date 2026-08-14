@@ -12,6 +12,7 @@ const loginPathMap: Record<AuthRole, string> = {
   user: '/login',
   merchant: '/merchant/login',
   admin: '/admin/login',
+  rider: '/rider/login',
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ role = 'user', children }) => {

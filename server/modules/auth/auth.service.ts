@@ -4,7 +4,7 @@ import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack
 import { eq } from 'drizzle-orm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { appUser, merchant, adminUser } from '../../database/schema';
+import { appUser, merchant, adminUser, rider } from '../../database/schema';
 
 @Injectable()
 export class AuthService {
@@ -105,6 +105,73 @@ export class AuthService {
         username: admin.username,
         realName: admin.realName,
         role: admin.role,
+      },
+    };
+  }
+
+  async loginRider(account: string, password: string) {
+    const riders = await this.db.select().from(rider).where(eq(rider.account, account)).limit(1);
+    if (riders.length === 0) {
+      throw new UnauthorizedException('账号或密码错误');
+    }
+    const r = riders[0];
+    if (r.status !== 'active') {
+      throw new UnauthorizedException('账号已被禁用');
+    }
+    if (r.auditStatus !== 'approved') {
+      throw new UnauthorizedException('账号审核未通过');
+    }
+    const valid = bcrypt.compareSync(password, r.password);
+    if (!valid) {
+      throw new UnauthorizedException('账号或密码错误');
+    }
+    const token = this.jwtService.sign({ id: r.id, role: 'rider' });
+    return {
+      token,
+      rider: {
+        id: r.id,
+        account: r.account,
+        name: r.name,
+        phone: r.phone,
+        avatarUrl: r.avatarUrl,
+        onlineStatus: r.onlineStatus,
+        totalOrders: r.totalOrders,
+        rating: String(r.rating),
+      },
+    };
+  }
+
+  async registerRider(account: string, password: string, name: string, phone: string) {
+    const existing = await this.db.select().from(rider).where(eq(rider.account, account)).limit(1);
+    if (existing.length > 0) {
+      throw new ConflictException('账号已注册');
+    }
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const result = await this.db.insert(rider).values({
+      account,
+      password: hashedPassword,
+      name,
+      phone,
+      avatarUrl: '',
+      idCard: '',
+      status: 'active',
+      onlineStatus: 'offline',
+      auditStatus: 'approved',
+      auditReason: '',
+    }).returning({ id: rider.id, account: rider.account, name: rider.name, phone: rider.phone });
+    const r = result[0];
+    const token = this.jwtService.sign({ id: r.id, role: 'rider' });
+    return {
+      token,
+      rider: {
+        id: r.id,
+        account: r.account,
+        name: r.name,
+        phone: r.phone,
+        avatarUrl: '',
+        onlineStatus: 'offline',
+        totalOrders: 0,
+        rating: '5.0',
       },
     };
   }

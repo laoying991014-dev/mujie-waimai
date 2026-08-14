@@ -28,6 +28,12 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage/AdminOrdersPage';
 import AdminNoticesPage from './pages/admin/AdminNoticesPage/AdminNoticesPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage/AdminSettingsPage';
 import AdminDailyStatsPage from './pages/admin/AdminDailyStatsPage/AdminDailyStatsPage';
+import RiderLoginPage from './pages/rider/RiderLoginPage/RiderLoginPage';
+import RiderHallPage from './pages/rider/RiderHallPage/RiderHallPage';
+import RiderOrdersPage from './pages/rider/RiderOrdersPage/RiderOrdersPage';
+import RiderOrderDetailPage from './pages/rider/RiderOrderDetailPage/RiderOrderDetailPage';
+import RiderProfilePage from './pages/rider/RiderProfilePage/RiderProfilePage';
+import RiderLayout from './components/rider-layout';
 
 const RoutesComponent = () => {
   const navigate = useNavigate();
@@ -39,6 +45,8 @@ const RoutesComponent = () => {
         navigate('/merchant/login', { replace: true });
       } else if (role === 'admin') {
         navigate('/admin/login', { replace: true });
+      } else if (role === 'rider') {
+        navigate('/rider/login', { replace: true });
       } else {
         navigate('/login', { replace: true });
       }
@@ -123,6 +131,41 @@ const RoutesComponent = () => {
         />
       </Route>
       <Route path="admin/login" element={<AdminLoginPage />} />
+      <Route path="rider/login" element={<RiderLoginPage />} />
+      <Route path="rider" element={<RiderLayout />}>
+        <Route
+          path="hall"
+          element={
+            <ProtectedRoute role="rider">
+              <RiderHallPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <ProtectedRoute role="rider">
+              <RiderOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders/:id"
+          element={
+            <ProtectedRoute role="rider">
+              <RiderOrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute role="rider">
+              <RiderProfilePage />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
       <Route path="admin" element={<AdminLayout />}>
         <Route
           path="dashboard"

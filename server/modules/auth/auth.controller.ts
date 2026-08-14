@@ -28,6 +28,18 @@ export class AuthController {
     return this.authService.loginAdmin(body.username, body.password);
   }
 
+  @Post('rider/register')
+  async registerRider(
+    @Body() body: { account: string; password: string; name: string; phone: string },
+  ) {
+    return this.authService.registerRider(body.account, body.password, body.name, body.phone);
+  }
+
+  @Post('rider/login')
+  async loginRider(@Body() body: { account: string; password: string }) {
+    return this.authService.loginRider(body.account, body.password);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Req() req: any) {

@@ -25,6 +25,7 @@ import { AdminSettingModule } from './modules/admin-setting/admin-setting.module
 import { DatabaseInitModule } from './modules/database-init/database-init.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { DailyStatModule } from './modules/daily-stat/daily-stat.module';
+import { RiderOrderModule } from './modules/rider-order/rider-order.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { DailyStatModule } from './modules/daily-stat/daily-stat.module';
     AdminSettingModule,
     UploadModule,
     DailyStatModule,
+    RiderOrderModule,
     // ====== @route-section: business-modules END ======
 
     ViewModule,

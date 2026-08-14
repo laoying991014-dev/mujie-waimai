@@ -9,7 +9,7 @@ import { Reflector } from '@nestjs/core';
 
 export interface JwtPayload {
   id: string;
-  role: 'user' | 'merchant' | 'admin' | 'super';
+  role: 'user' | 'merchant' | 'admin' | 'super' | 'rider';
 }
 
 @Injectable()
