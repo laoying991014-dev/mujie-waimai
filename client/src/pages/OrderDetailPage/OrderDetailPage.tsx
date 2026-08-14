@@ -9,6 +9,7 @@ import {
   Store,
   Check,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import { Image } from '@client/src/components/ui/image';
@@ -167,6 +168,13 @@ const OrderDetailPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div className="text-base font-semibold text-foreground">订单详情</div>
+          <button
+            onClick={() => loadDetail()}
+            disabled={loading}
+            className="ml-auto w-8 h-8 rounded-full hover:bg-accent flex items-center justify-center transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-5 h-5 text-foreground ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
       </div>
 

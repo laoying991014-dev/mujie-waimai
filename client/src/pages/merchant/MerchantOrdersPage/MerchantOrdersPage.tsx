@@ -36,7 +36,7 @@ import {
   PaginationNext,
 } from '@client/src/components/ui/pagination';
 import { Card, CardContent } from '@client/src/components/ui/card';
-import { EyeIcon, CheckCircle2Icon, XCircleIcon, PackageIcon } from 'lucide-react';
+import { EyeIcon, CheckCircle2Icon, XCircleIcon, PackageIcon, RefreshCw } from 'lucide-react';
 import { merchantOrder } from '@client/src/api';
 import {
   ORDER_STATUS_LABELS,
@@ -241,6 +241,15 @@ const MerchantOrdersPage: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">订单管理</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchOrders()}
+          disabled={loading}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          刷新
+        </Button>
       </div>
 
       <Card className="shadow-sm">
