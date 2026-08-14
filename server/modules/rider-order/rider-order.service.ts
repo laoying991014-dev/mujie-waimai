@@ -9,7 +9,7 @@ import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack
 import { eq, and, desc, sql, inArray, count } from 'drizzle-orm';
 import { orderInfo, orderItem, merchant, rider } from '../../database/schema';
 
-interface OrderSummary {
+export interface OrderSummary {
   id: string;
   orderNo: string;
   merchantId: string;
