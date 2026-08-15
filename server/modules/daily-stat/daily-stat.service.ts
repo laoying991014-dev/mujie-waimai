@@ -169,8 +169,8 @@ export class DailyStatService {
     const now = new Date();
     const myanmarTime = new Date(now.getTime() + 6.5 * 60 * 60 * 1000);
     const year = myanmarTime.getUTCFullYear();
-    const month = String(myammarTime.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(myammarTime.getUTCDate()).padStart(2, '0');
+    const month = String(myanmarTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(myanmarTime.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
