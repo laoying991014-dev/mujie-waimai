@@ -1,11 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
-import { eq, and, gte, lte, sql, desc, type SQL } from 'drizzle-orm';
+import { eq, and, gte, lt, sql, desc, type SQL } from 'drizzle-orm';
 import { merchant, orderInfo, merchantDailyStat } from '../../database/schema';
 
 @Injectable()
 export class DailyStatService {
   private readonly logger = new Logger(DailyStatService.name);
+
+  // 木姐外卖业务日期按缅甸当地时间计算（Asia/Yangon，UTC+06:30）
+  private readonly BUSINESS_TIMEZONE = 'Asia/Yangon';
 
   constructor(
     @Inject(DRIZZLE_DATABASE) private readonly db: PostgresJsDatabase,
@@ -25,7 +28,11 @@ export class DailyStatService {
       let calculatedCount = 0;
 
       for (const m of merchants) {
-        // 查询该商家当天的已完成订单
+        // 查询该商家当天的订单：按缅甸当地时间 00:00（含）到次日 00:00（不含）
+        const dayStart = new Date(`${targetDate}T00:00:00+06:30`);
+        const nextDay = this.getNextDateString(targetDate);
+        const dayEndExclusive = new Date(`${nextDay}T00:00:00+06:30`);
+
         const orders = await this.db
           .select({
             id: orderInfo.id,
@@ -36,8 +43,8 @@ export class DailyStatService {
           .where(
             and(
               eq(orderInfo.merchantId, m.id),
-              gte(orderInfo.createdAt, new Date(`${targetDate}T00:00:00`)),
-              lte(orderInfo.createdAt, new Date(`${targetDate}T23:59:59`)),
+              gte(orderInfo.createdAt, dayStart),
+              lt(orderInfo.createdAt, dayEndExclusive),
             ),
           );
 
@@ -116,7 +123,7 @@ export class DailyStatService {
       conditions.push(gte(merchantDailyStat.statDate, startDate));
     }
     if (endDate) {
-      conditions.push(lte(merchantDailyStat.statDate, endDate));
+      conditions.push(sql`${merchantDailyStat.statDate} <= ${endDate}`);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -166,11 +173,31 @@ export class DailyStatService {
     return result.length > 0;
   }
 
+  /**
+   * 获取缅甸当地日期（Asia/Yangon），避免服务器 UTC 时区导致凌晨订单归到前一天。
+   */
   private getTodayString(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: this.BUSINESS_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+
+    const year = parts.find((part) => part.type === 'year')?.value;
+    const month = parts.find((part) => part.type === 'month')?.value;
+    const day = parts.find((part) => part.type === 'day')?.value;
+
     return `${year}-${month}-${day}`;
+  }
+
+  private getNextDateString(date: string): string {
+    const [year, month, day] = date.split('-').map(Number);
+    const next = new Date(Date.UTC(year, month - 1, day + 1));
+    return [
+      next.getUTCFullYear(),
+      String(next.getUTCMonth() + 1).padStart(2, '0'),
+      String(next.getUTCDate()).padStart(2, '0'),
+    ].join('-');
   }
 }
