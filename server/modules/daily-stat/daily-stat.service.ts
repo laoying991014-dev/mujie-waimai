@@ -13,19 +13,20 @@ export class DailyStatService {
 
   /**
    * 计算指定日期的商家配送费统计
+   * 日期按缅甸时间（Asia/Yangon，UTC+6:30）计算，避免服务器 UTC 时区导致跨日。
    */
   async calculateDailyStats(date?: string): Promise<{ count: number }> {
     const targetDate = date || this.getTodayString();
     this.logger.log(`开始计算 ${targetDate} 的商家配送费统计`);
 
     try {
-      // 获取所有商家
       const merchants = await this.db.select({ id: merchant.id }).from(merchant);
 
       let calculatedCount = 0;
+      const dayStart = this.myanmarDateToUtcStart(targetDate);
+      const nextDayStart = this.myanmarDateToUtcStart(this.addOneDay(targetDate));
 
       for (const m of merchants) {
-        // 查询该商家当天的已完成订单
         const orders = await this.db
           .select({
             id: orderInfo.id,
@@ -36,8 +37,8 @@ export class DailyStatService {
           .where(
             and(
               eq(orderInfo.merchantId, m.id),
-              gte(orderInfo.createdAt, new Date(`${targetDate}T00:00:00`)),
-              lte(orderInfo.createdAt, new Date(`${targetDate}T23:59:59`)),
+              gte(orderInfo.createdAt, dayStart),
+              sql`${orderInfo.createdAt} < ${nextDayStart}`,
             ),
           );
 
@@ -51,7 +52,6 @@ export class DailyStatService {
           0,
         );
 
-        // 检查是否已有统计记录
         const existing = await this.db
           .select({ id: merchantDailyStat.id })
           .from(merchantDailyStat)
@@ -64,7 +64,6 @@ export class DailyStatService {
           .limit(1);
 
         if (existing.length > 0) {
-          // 更新已有记录
           await this.db
             .update(merchantDailyStat)
             .set({
@@ -75,7 +74,6 @@ export class DailyStatService {
             })
             .where(eq(merchantDailyStat.id, existing[0].id));
         } else {
-          // 创建新记录
           await this.db.insert(merchantDailyStat).values({
             merchantId: m.id,
             statDate: targetDate,
@@ -166,11 +164,26 @@ export class DailyStatService {
     return result.length > 0;
   }
 
+  /** 获取当前缅甸时间对应的 YYYY-MM-DD。 */
   private getTodayString(): string {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const myanmarTime = new Date(now.getTime() + 6.5 * 60 * 60 * 1000);
+    const year = myanmarTime.getUTCFullYear();
+    const month = String(myammarTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(myammarTime.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  /** 将缅甸当地日期的 00:00 转换成对应 UTC Date。 */
+  private myanmarDateToUtcStart(date: string): Date {
+    const [year, month, day] = date.split('-').map(Number);
+    return new Date(Date.UTC(year, month - 1, day, 0, 0, 0) - 6.5 * 60 * 60 * 1000);
+  }
+
+  /** 计算下一个日历日。 */
+  private addOneDay(date: string): string {
+    const [year, month, day] = date.split('-').map(Number);
+    const next = new Date(Date.UTC(year, month - 1, day + 1));
+    return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}-${String(next.getUTCDate()).padStart(2, '0')}`;
   }
 }
