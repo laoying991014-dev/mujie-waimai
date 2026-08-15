@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Copy, Download, Loader2, Phone, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Copy, Loader2, Phone, RefreshCw } from 'lucide-react';
 import { Button } from '@client/src/components/ui/button';
 import { Input } from '@client/src/components/ui/input';
 import { toast } from 'sonner';
@@ -19,52 +19,29 @@ const PaymentPage: React.FC = () => {
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
-    try {
-      setInfo(await orderApi.getPaymentInfo(id));
-    } catch {
-      toast.error('加载支付信息失败');
-    } finally {
-      setLoading(false);
-    }
+    try { setInfo(await orderApi.getPaymentInfo(id)); }
+    catch { toast.error('加载支付信息失败'); }
+    finally { setLoading(false); }
   }, [id]);
 
   useEffect(() => { void load(); }, [load]);
 
   const copyPhone = async () => {
     if (!info?.paymentPhone) return;
-    try {
-      await navigator.clipboard.writeText(info.paymentPhone);
-      toast.success('收款手机号已复制');
-    } catch { toast.error('复制失败'); }
-  };
-
-  const saveQr = () => {
-    if (!info?.paymentQrUrl) return;
-    const a = document.createElement('a');
-    a.href = info.paymentQrUrl;
-    a.download = `南坎极速外卖-收款码-${info.orderNo}.png`;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    try { await navigator.clipboard.writeText(info.paymentPhone); toast.success('收款手机号已复制'); }
+    catch { toast.error('复制失败'); }
   };
 
   const submitLast5 = async () => {
     if (!id) return;
-    if (!/^\d{5}$/.test(last5)) {
-      toast.error('请输入交易详情后5位数字');
-      return;
-    }
+    if (!/^\d{5}$/.test(last5)) { toast.error('请输入交易详情后5位数字'); return; }
     setSubmitting(true);
     try {
       await orderApi.submitPayment(id, last5);
       toast.success('已提交，等待商家或管理员核实');
-      setShowForm(false);
-      setLast5('');
-      await load();
-    } catch {
-      toast.error('提交失败，请重试');
-    } finally { setSubmitting(false); }
+      setShowForm(false); setLast5(''); await load();
+    } catch { toast.error('提交失败，请重试'); }
+    finally { setSubmitting(false); }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin" /></div>;
@@ -91,54 +68,26 @@ const PaymentPage: React.FC = () => {
           <div className="text-3xl font-bold text-primary font-mono mt-1">¥{info.totalAmount}</div>
         </div>
 
-        {verified && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-            <div className="font-semibold text-emerald-700">支付已确认到账</div>
-            <div className="text-sm text-emerald-600 mt-1">订单已进入商家/骑手处理流程</div>
-            <Button className="mt-4" onClick={() => navigate(`/orders/${info.orderId}`)}>查看订单</Button>
-          </div>
-        )}
+        {verified && <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center"><CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" /><div className="font-semibold text-emerald-700">支付已确认到账</div><div className="text-sm text-emerald-600 mt-1">订单已进入商家/骑手处理流程</div><Button className="mt-4" onClick={() => navigate(`/orders/${info.orderId}`)}>查看订单</Button></div>}
 
-        {!verified && !review && (
-          <>
-            <div className="bg-card rounded-xl border p-5">
-              <div className="font-semibold mb-3">请扫码支付</div>
-              {info.paymentQrUrl ? (
-                <div className="flex flex-col items-center">
-                  <img src={info.paymentQrUrl} alt="收款码" className="w-64 h-64 object-contain rounded-lg border bg-white" />
-                  <Button variant="outline" className="mt-3" onClick={saveQr}><Download className="w-4 h-4" />保存收款码</Button>
-                </div>
-              ) : <div className="py-12 text-center text-sm text-muted-foreground">管理员暂未配置收款码</div>}
-            </div>
-            <div className="bg-card rounded-xl border p-5">
-              <div className="font-semibold mb-3">收款手机号</div>
-              <button onClick={copyPhone} className="w-full rounded-lg border px-4 py-3 flex items-center justify-between hover:bg-accent">
-                <span className="font-mono text-lg">{info.paymentPhone || '暂未设置'}</span><Copy className="w-4 h-4" />
-              </button>
-              <div className="text-xs text-muted-foreground mt-2">点击手机号即可复制</div>
-            </div>
-            <Button className="w-full h-12 text-base" onClick={() => setShowForm(true)}>已支付</Button>
-          </>
-        )}
-
-        {review && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
-            <div className="text-lg font-semibold text-amber-700">等待核实付款</div>
-            <div className="text-sm text-amber-600 mt-2">您提交的交易后5位：<b>{info.paymentLast5 || '-----'}</b></div>
-            <div className="text-xs text-amber-600 mt-2">商家或管理员确认到账后，订单才会进入骑手接单大厅。</div>
-            <Button variant="outline" className="mt-4" onClick={() => setShowForm(true)}>重新提交后5位</Button>
-          </div>
-        )}
-
-        {showForm && !verified && (
+        {!verified && !review && <>
           <div className="bg-card rounded-xl border p-5">
-            <div className="font-semibold">请输入交易详情后5位数</div>
-            <div className="text-xs text-muted-foreground mt-1">请输入支付成功后交易详情中的最后5位数字。</div>
-            <Input className="mt-4 text-center text-xl tracking-[0.35em]" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="00000" />
-            <Button className="w-full mt-4" disabled={submitting || last5.length !== 5} onClick={submitLast5}>{submitting ? '提交中...' : '确认'}</Button>
+            <div className="font-semibold mb-3">收款人姓名</div>
+            <div className="w-full rounded-lg border px-4 py-3 text-lg font-medium">收款人</div>
           </div>
-        )}
+          <div className="bg-card rounded-xl border p-5">
+            <div className="font-semibold mb-3">收款人手机号</div>
+            <button onClick={copyPhone} className="w-full rounded-lg border px-4 py-3 flex items-center justify-between hover:bg-accent">
+              <span className="font-mono text-lg">{info.paymentPhone || '暂未设置'}</span><Copy className="w-4 h-4" />
+            </button>
+            <div className="text-xs text-muted-foreground mt-2">点击手机号即可复制</div>
+          </div>
+          <Button className="w-full h-12 text-base" onClick={() => setShowForm(true)}>已支付</Button>
+        </>}
+
+        {review && <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center"><div className="text-lg font-semibold text-amber-700">等待核实付款</div><div className="text-sm text-amber-600 mt-2">您提交的交易后5位：<b>{info.paymentLast5 || '-----'}</b></div><div className="text-xs text-amber-600 mt-2">商家或管理员确认到账后，订单才会进入骑手接单大厅。</div><Button variant="outline" className="mt-4" onClick={() => setShowForm(true)}>重新提交后5位</Button></div>}
+
+        {showForm && !verified && <div className="bg-card rounded-xl border p-5"><div className="font-semibold">请输入交易详情后5位数</div><div className="text-xs text-muted-foreground mt-1">请输入支付成功后交易详情中的最后5位数字。</div><Input className="mt-4 text-center text-xl tracking-[0.35em]" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="00000" /><Button className="w-full mt-4" disabled={submitting || last5.length !== 5} onClick={submitLast5}>{submitting ? '提交中...' : '确认'}</Button></div>}
 
         <div className="text-xs text-muted-foreground text-center pt-2"><Phone className="inline w-3 h-3 mr-1" />如支付遇到问题，请联系平台客服。</div>
       </div>
