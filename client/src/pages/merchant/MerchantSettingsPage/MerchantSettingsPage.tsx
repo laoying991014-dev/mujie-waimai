@@ -18,6 +18,8 @@ const defaultForm: Omit<ShopSettings, 'businessStatus'> = {
   businessEndTime: '22:00',
   deliveryFee: '0',
   minOrderAmount: '0',
+  paymentName: '',
+  paymentPhone: '',
 };
 
 const MerchantSettingsPage: React.FC = () => {
@@ -38,6 +40,8 @@ const MerchantSettingsPage: React.FC = () => {
         businessEndTime: data.businessEndTime,
         deliveryFee: data.deliveryFee,
         minOrderAmount: data.minOrderAmount,
+        paymentName: data.paymentName || '',
+        paymentPhone: data.paymentPhone || '',
       });
     } catch {
       toast.error('加载店铺设置失败');
@@ -122,6 +126,40 @@ const MerchantSettingsPage: React.FC = () => {
               disabled={loading}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-border">
+        <CardHeader>
+          <CardTitle className="text-base">收款设置</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="paymentName">收款人姓名</Label>
+            <Input
+              id="paymentName"
+              name="paymentName"
+              value={form.paymentName}
+              onChange={handleChange}
+              placeholder="请输入收款人姓名"
+              disabled={loading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="paymentPhone">收款人手机号</Label>
+            <Input
+              id="paymentPhone"
+              name="paymentPhone"
+              value={form.paymentPhone}
+              onChange={handleChange}
+              placeholder="请输入收款人手机号"
+              inputMode="tel"
+              disabled={loading}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            顾客下单后会在支付页面看到这里设置的收款人姓名和手机号。
+          </p>
         </CardContent>
       </Card>
 
