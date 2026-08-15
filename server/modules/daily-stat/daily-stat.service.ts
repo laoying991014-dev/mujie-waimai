@@ -23,8 +23,11 @@ export class DailyStatService {
       const merchants = await this.db.select({ id: merchant.id }).from(merchant);
 
       let calculatedCount = 0;
+
+      // 缅甸当天 00:00 到 23:59:59.999，对应 UTC 的时间范围。
       const dayStart = this.myanmarDateToUtcStart(targetDate);
       const nextDayStart = this.myanmarDateToUtcStart(this.addOneDay(targetDate));
+      const dayEnd = new Date(nextDayStart.getTime() - 1);
 
       for (const m of merchants) {
         const orders = await this.db
@@ -38,7 +41,7 @@ export class DailyStatService {
             and(
               eq(orderInfo.merchantId, m.id),
               gte(orderInfo.createdAt, dayStart),
-              sql`${orderInfo.createdAt} < ${nextDayStart}`,
+              lte(orderInfo.createdAt, dayEnd),
             ),
           );
 
@@ -94,9 +97,6 @@ export class DailyStatService {
     }
   }
 
-  /**
-   * 获取商家每日统计列表
-   */
   async getMerchantDailyStats(
     merchantId?: string,
     startDate?: string,
@@ -107,15 +107,9 @@ export class DailyStatService {
     const offset = (page - 1) * pageSize;
     const conditions: SQL[] = [];
 
-    if (merchantId) {
-      conditions.push(eq(merchantDailyStat.merchantId, merchantId));
-    }
-    if (startDate) {
-      conditions.push(gte(merchantDailyStat.statDate, startDate));
-    }
-    if (endDate) {
-      conditions.push(lte(merchantDailyStat.statDate, endDate));
-    }
+    if (merchantId) conditions.push(eq(merchantDailyStat.merchantId, merchantId));
+    if (startDate) conditions.push(gte(merchantDailyStat.statDate, startDate));
+    if (endDate) conditions.push(lte(merchantDailyStat.statDate, endDate));
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -151,9 +145,6 @@ export class DailyStatService {
     };
   }
 
-  /**
-   * 检查今天是否已经统计过
-   */
   async isTodayCalculated(): Promise<boolean> {
     const today = this.getTodayString();
     const result = await this.db
@@ -164,7 +155,6 @@ export class DailyStatService {
     return result.length > 0;
   }
 
-  /** 获取当前缅甸时间对应的 YYYY-MM-DD。 */
   private getTodayString(): string {
     const now = new Date();
     const myanmarTime = new Date(now.getTime() + 6.5 * 60 * 60 * 1000);
@@ -174,13 +164,11 @@ export class DailyStatService {
     return `${year}-${month}-${day}`;
   }
 
-  /** 将缅甸当地日期的 00:00 转换成对应 UTC Date。 */
   private myanmarDateToUtcStart(date: string): Date {
     const [year, month, day] = date.split('-').map(Number);
     return new Date(Date.UTC(year, month - 1, day, 0, 0, 0) - 6.5 * 60 * 60 * 1000);
   }
 
-  /** 计算下一个日历日。 */
   private addOneDay(date: string): string {
     const [year, month, day] = date.split('-').map(Number);
     const next = new Date(Date.UTC(year, month - 1, day + 1));
