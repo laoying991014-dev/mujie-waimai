@@ -7,6 +7,12 @@ import { toast } from 'sonner';
 import * as orderApi from '@client/src/api/order';
 import type { PaymentInfo } from '@client/src/api/order';
 
+const formatMMK = (value: string | number) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return `Ks ${value}`;
+  return `Ks ${numeric.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 const PaymentPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -65,12 +71,16 @@ const PaymentPage: React.FC = () => {
           <div className="text-sm text-muted-foreground">订单号</div>
           <div className="font-mono text-sm mt-1">{info.orderNo}</div>
           <div className="text-sm text-muted-foreground mt-4">需支付总金额</div>
-          <div className="text-3xl font-bold text-primary font-mono mt-1">¥{info.totalAmount}</div>
+          <div className="text-3xl font-bold text-primary font-mono mt-1">{formatMMK(info.totalAmount)}</div>
         </div>
 
         {verified && <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center"><CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" /><div className="font-semibold text-emerald-700">支付已确认到账</div><div className="text-sm text-emerald-600 mt-1">订单已进入商家/骑手处理流程</div><Button className="mt-4" onClick={() => navigate(`/orders/${info.orderId}`)}>查看订单</Button></div>}
 
         {!verified && !review && <>
+          <div className="bg-card rounded-xl border p-5">
+            <div className="text-sm text-muted-foreground mb-2">支付提示</div>
+            <div className="font-semibold text-primary">请使用 KBZ Pay 进行支付</div>
+          </div>
           <div className="bg-card rounded-xl border p-5">
             <div className="font-semibold mb-3">收款人姓名</div>
             <div className="w-full rounded-lg border px-4 py-3 text-lg font-medium">收款人</div>
