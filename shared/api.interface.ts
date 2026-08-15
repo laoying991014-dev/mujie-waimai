@@ -91,7 +91,11 @@ export interface MerchantOrderDetail {
   createdAt: string; paymentLast5?: string; paymentSubmittedAt?: string; paymentVerifiedAt?: string;
 }
 export interface DashboardStats { todayRevenue: string; todayOrders: number; pendingOrders: number; }
-export interface ShopSettings { shopName: string; shopLogoUrl: string; shopCoverUrl: string; shopDescription: string; businessStartTime: string; businessEndTime: string; deliveryFee: string; minOrderAmount: string; businessStatus: 'open' | 'closed'; }
+export interface ShopSettings {
+  shopName: string; shopLogoUrl: string; shopCoverUrl: string; shopDescription: string;
+  businessStartTime: string; businessEndTime: string; deliveryFee: string; minOrderAmount: string;
+  paymentName: string; paymentPhone: string; businessStatus: 'open' | 'closed';
+}
 export interface MerchantProduct { id: string; name: string; mainImageUrl: string; categoryName: string; price: string; stock: number; monthSales: number; status: 'on_sale' | 'off_sale'; }
 export interface AdminOverview { totalUsers: number; totalMerchants: number; totalOrders: number; totalRevenue: string; todayNewUsers: number; todayNewOrders: number; todayRevenue: string; todayDeliveryFee: string; pendingMerchantAudits: number; }
 export interface TrendItem { date: string; count?: number; amount?: string; }
@@ -110,7 +114,8 @@ export interface AdminOrderDetail {
 export interface ProductCategory { id: string; name: string; iconUrl: string; sortOrder: number; status: string; }
 export interface NoticeItemFull { id: string; title: string; status: 'published' | 'draft'; createdAt: string; }
 export interface SiteSettings {
-  siteName: string; siteLogoUrl: string; customerServicePhone: string; paymentPhone: string; paymentQrUrl: string;
+  siteName: string; siteLogoUrl: string; customerServicePhone: string;
+  paymentName: string; paymentPhone: string; paymentQrUrl: string;
   icpInfo: string; copyrightInfo: string;
 }
 export interface BannerFull { id: string; title: string; imageUrl: string; linkUrl: string; sortOrder: number; status: 'active' | 'inactive'; }
