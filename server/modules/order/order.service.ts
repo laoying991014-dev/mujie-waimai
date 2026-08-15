@@ -16,6 +16,13 @@ export class OrderService {
     return `OD${ts}${rand}`;
   }
 
+  private async ensurePaymentSettingSchema(): Promise<void> {
+    await this.db.execute(sql`CREATE TABLE IF NOT EXISTS payment_setting (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), payment_phone varchar(20) NOT NULL DEFAULT '', payment_qr_url text NOT NULL DEFAULT '', created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP)`);
+    await this.db.execute(sql`ALTER TABLE payment_setting ADD COLUMN IF NOT EXISTS payment_name varchar(100) NOT NULL DEFAULT ''`);
+    await this.db.execute(sql`ALTER TABLE payment_setting ADD COLUMN IF NOT EXISTS merchant_id uuid`);
+    await this.db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS payment_setting_merchant_id_key ON payment_setting (merchant_id) WHERE merchant_id IS NOT NULL`);
+  }
+
   async createOrder(userId: string, addressId: string, remark?: string): Promise<{ orderId: string; orderNo: string; status: string }> {
     const cartRows = await this.db.select({
       id: cartItem.id, productId: cartItem.productId, merchantId: cartItem.merchantId, quantity: cartItem.quantity,
@@ -105,13 +112,14 @@ export class OrderService {
   }
 
   async getPaymentInfo(userId: string, orderId: string) {
-    const rows = await this.db.select({ id: orderInfo.id, orderNo: orderInfo.orderNo, totalAmount: orderInfo.totalAmount, status: orderInfo.status, userId: orderInfo.userId }).from(orderInfo).where(eq(orderInfo.id, orderId)).limit(1);
+    await this.ensurePaymentSettingSchema();
+    const rows = await this.db.select({ id: orderInfo.id, orderNo: orderInfo.orderNo, merchantId: orderInfo.merchantId, totalAmount: orderInfo.totalAmount, status: orderInfo.status, userId: orderInfo.userId }).from(orderInfo).where(eq(orderInfo.id, orderId)).limit(1);
     if (!rows.length) throw new NotFoundException('订单不存在');
     if (rows[0].userId !== userId) throw new ForbiddenException('无权查看该订单');
-    const settings: any[] = await this.db.execute(sql`SELECT payment_phone, payment_qr_url FROM payment_setting ORDER BY created_at ASC LIMIT 1`);
+    const settings: any[] = await this.db.execute(sql`SELECT payment_name, payment_phone, payment_qr_url FROM payment_setting WHERE merchant_id = ${rows[0].merchantId} OR merchant_id IS NULL ORDER BY CASE WHEN merchant_id = ${rows[0].merchantId} THEN 0 ELSE 1 END, created_at ASC LIMIT 1`);
     const paymentRows: any[] = await this.db.execute(sql`SELECT last5, submitted_at, verified_at FROM order_payment WHERE order_id = ${orderId} LIMIT 1`);
     const p = paymentRows[0]; const s = settings[0];
-    return { orderId, orderNo: rows[0].orderNo, totalAmount: String(rows[0].totalAmount), status: rows[0].status, paymentPhone: s?.payment_phone || '', paymentQrUrl: s?.payment_qr_url || '', paymentLast5: p?.last5 || undefined, paymentSubmittedAt: p?.submitted_at ? new Date(p.submitted_at).toISOString() : undefined, paymentVerifiedAt: p?.verified_at ? new Date(p.verified_at).toISOString() : undefined };
+    return { orderId, orderNo: rows[0].orderNo, totalAmount: String(rows[0].totalAmount), status: rows[0].status, paymentName: s?.payment_name || '', paymentPhone: s?.payment_phone || '', paymentQrUrl: s?.payment_qr_url || '', paymentLast5: p?.last5 || undefined, paymentSubmittedAt: p?.submitted_at ? new Date(p.submitted_at).toISOString() : undefined, paymentVerifiedAt: p?.verified_at ? new Date(p.verified_at).toISOString() : undefined };
   }
 
   async submitPayment(userId: string, orderId: string, last5: string) {
