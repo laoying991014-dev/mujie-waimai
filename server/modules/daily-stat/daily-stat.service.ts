@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
-import { eq, and, gte, lt, sql, desc, type SQL } from 'drizzle-orm';
+import { eq, and, gte, lte, lt, sql, desc, type SQL } from 'drizzle-orm';
 import { merchant, orderInfo, merchantDailyStat } from '../../database/schema';
 
 @Injectable()
@@ -123,7 +123,7 @@ export class DailyStatService {
       conditions.push(gte(merchantDailyStat.statDate, startDate));
     }
     if (endDate) {
-      conditions.push(sql`${merchantDailyStat.statDate} <= ${endDate}`);
+      conditions.push(lte(merchantDailyStat.statDate, endDate));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
