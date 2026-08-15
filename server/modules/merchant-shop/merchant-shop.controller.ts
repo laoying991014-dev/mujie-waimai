@@ -21,6 +21,8 @@ interface SaveSettingsBody {
   businessEndTime: string;
   deliveryFee: string;
   minOrderAmount: string;
+  paymentName: string;
+  paymentPhone: string;
 }
 
 interface UpdateStatusBody {
