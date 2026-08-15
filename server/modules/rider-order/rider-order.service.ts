@@ -456,7 +456,6 @@ export class RiderOrderService {
         phone: rider.phone,
         avatarUrl: rider.avatarUrl,
         onlineStatus: rider.onlineStatus,
-        currentOrderCount: rider.currentOrderCount,
         totalOrders: rider.totalOrders,
         totalDeliveryFee: rider.totalDeliveryFee,
         rating: rider.rating,
@@ -469,9 +468,24 @@ export class RiderOrderService {
       throw new NotFoundException('骑手不存在');
     }
 
+    // 不再直接使用 rider.currentOrderCount，因为历史订单状态变更后这个缓存值可能不准确。
+    // 进行中订单以订单表的真实状态为准：只有 preparing / delivering 才算未完成订单。
+    const activeOrderRows = await this.db
+      .select({ count: count() })
+      .from(orderInfo)
+      .where(
+        and(
+          eq(orderInfo.riderId, riderId),
+          inArray(orderInfo.status, ['preparing', 'delivering']),
+        ),
+      );
+
     const r = riderRows[0];
+    const currentOrderCount = Number(activeOrderRows[0]?.count ?? 0);
+
     return {
       ...r,
+      currentOrderCount,
       totalDeliveryFee: String(r.totalDeliveryFee),
       rating: String(r.rating),
     };
