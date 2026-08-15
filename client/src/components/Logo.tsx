@@ -34,7 +34,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
       </div>
       {showText && (
         <span className={`font-bold ${text} tracking-tight`}>
-          <span className="text-foreground">木姐</span>
+          <span className="text-foreground">南坎极速</span>
           <span className="text-primary">外卖</span>
         </span>
       )}
