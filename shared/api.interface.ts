@@ -110,7 +110,7 @@ export interface AdminOrderDetail {
 export interface ProductCategory { id: string; name: string; iconUrl: string; sortOrder: number; status: string; }
 export interface NoticeItemFull { id: string; title: string; status: 'published' | 'draft'; createdAt: string; }
 export interface SiteSettings {
-  siteName: string; siteLogoUrl: string; customerServicePhone: string; paymentPhone: string; paymentQrUrl: string;
+  siteName: string; siteLogoUrl: string; customerServicePhone: string; paymentRecipientName: string; paymentPhone: string; paymentQrUrl: string;
   icpInfo: string; copyrightInfo: string;
 }
 export interface BannerFull { id: string; title: string; imageUrl: string; linkUrl: string; sortOrder: number; status: 'active' | 'inactive'; }
