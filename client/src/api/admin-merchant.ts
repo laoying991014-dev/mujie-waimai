@@ -21,6 +21,8 @@ export const createMerchant = async (data: {
   shopName: string;
   contactName: string;
   contactPhone: string;
+  paymentRecipientName: string;
+  paymentPhone: string;
   address: string;
   categoryId: string;
   deliveryFee: string;
@@ -36,6 +38,8 @@ export const updateMerchant = async (
     shopName?: string;
     contactName?: string;
     contactPhone?: string;
+    paymentRecipientName?: string;
+    paymentPhone?: string;
     address?: string;
     categoryId?: string;
     deliveryFee?: string;
