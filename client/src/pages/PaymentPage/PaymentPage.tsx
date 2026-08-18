@@ -83,7 +83,7 @@ const PaymentPage: React.FC = () => {
           </div>
           <div className="bg-card rounded-xl border p-5">
             <div className="font-semibold mb-3">收款人姓名</div>
-            <div className="w-full rounded-lg border px-4 py-3 text-lg font-medium">收款人</div>
+            <div className="w-full rounded-lg border px-4 py-3 text-lg font-medium">{info.paymentRecipientName || '暂未设置'}</div>
           </div>
           <div className="bg-card rounded-xl border p-5">
             <div className="font-semibold mb-3">收款人手机号</div>

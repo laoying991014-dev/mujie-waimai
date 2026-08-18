@@ -108,10 +108,10 @@ export class OrderService {
     const rows = await this.db.select({ id: orderInfo.id, orderNo: orderInfo.orderNo, totalAmount: orderInfo.totalAmount, status: orderInfo.status, userId: orderInfo.userId }).from(orderInfo).where(eq(orderInfo.id, orderId)).limit(1);
     if (!rows.length) throw new NotFoundException('订单不存在');
     if (rows[0].userId !== userId) throw new ForbiddenException('无权查看该订单');
-    const settings: any[] = await this.db.execute(sql`SELECT payment_phone, payment_qr_url FROM payment_setting ORDER BY created_at ASC LIMIT 1`);
+    const settings: any[] = await this.db.execute(sql`SELECT payment_recipient_name, payment_phone, payment_qr_url FROM payment_setting ORDER BY created_at ASC LIMIT 1`);
     const paymentRows: any[] = await this.db.execute(sql`SELECT last5, submitted_at, verified_at FROM order_payment WHERE order_id = ${orderId} LIMIT 1`);
     const p = paymentRows[0]; const s = settings[0];
-    return { orderId, orderNo: rows[0].orderNo, totalAmount: String(rows[0].totalAmount), status: rows[0].status, paymentPhone: s?.payment_phone || '', paymentQrUrl: s?.payment_qr_url || '', paymentLast5: p?.last5 || undefined, paymentSubmittedAt: p?.submitted_at ? new Date(p.submitted_at).toISOString() : undefined, paymentVerifiedAt: p?.verified_at ? new Date(p.verified_at).toISOString() : undefined };
+    return { orderId, orderNo: rows[0].orderNo, totalAmount: String(rows[0].totalAmount), status: rows[0].status, paymentRecipientName: s?.payment_recipient_name || '', paymentPhone: s?.payment_phone || '', paymentQrUrl: s?.payment_qr_url || '', paymentLast5: p?.last5 || undefined, paymentSubmittedAt: p?.submitted_at ? new Date(p.submitted_at).toISOString() : undefined, paymentVerifiedAt: p?.verified_at ? new Date(p.verified_at).toISOString() : undefined };
   }
 
   async submitPayment(userId: string, orderId: string, last5: string) {

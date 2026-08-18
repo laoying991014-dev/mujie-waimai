@@ -26,6 +26,7 @@ export interface PaymentInfo {
   orderNo: string;
   totalAmount: string;
   status: string;
+  paymentRecipientName: string;
   paymentPhone: string;
   paymentQrUrl: string;
   paymentLast5?: string;
