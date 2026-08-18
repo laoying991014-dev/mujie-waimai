@@ -37,6 +37,8 @@ export class DatabaseInitService implements OnModuleInit {
       }
       // 幂等迁移：已有数据库也会执行，确保支付核实所需表存在。
       this.executeSqlFileWithPsql(databaseUrl, '06_payment_verification.sql');
+      // 幂等迁移：为每个商家增加独立收款人姓名和手机号。
+      this.executeSqlFileWithPsql(databaseUrl, '07_merchant_payment_settings.sql');
     } catch (error) {
       this.logger.error('数据库初始化失败', error);
     } finally { await sql.end(); }
