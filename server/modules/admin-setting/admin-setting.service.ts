@@ -9,7 +9,7 @@ interface UpdateNoticeDto { title: string; content: string; status: 'published' 
 interface CreateBannerDto { title: string; imageUrl: string; linkUrl: string; sortOrder: number; }
 interface UpdateBannerDto { title: string; imageUrl: string; linkUrl: string; sortOrder: number; status: 'active' | 'inactive'; }
 
-const DEFAULT_SITE_SETTINGS: SiteSettings = { siteName: '南坎极速外卖', siteLogoUrl: '', customerServicePhone: '', paymentPhone: '', paymentQrUrl: '', icpInfo: '', copyrightInfo: '' };
+const DEFAULT_SITE_SETTINGS: SiteSettings = { siteName: '南坎极速外卖', siteLogoUrl: '', customerServicePhone: '', paymentRecipientName: '', paymentPhone: '', paymentQrUrl: '', icpInfo: '', copyrightInfo: '' };
 
 @Injectable()
 export class AdminSettingService {
@@ -31,10 +31,10 @@ export class AdminSettingService {
 
   async getSiteSettings(): Promise<SiteSettings> {
     const rows = await this.db.select({ siteName: siteSetting.siteName, siteLogoUrl: siteSetting.siteLogoUrl, customerServicePhone: siteSetting.customerServicePhone, icpInfo: siteSetting.icpInfo, copyrightInfo: siteSetting.copyrightInfo }).from(siteSetting).limit(1);
-    const paymentRows: any[] = await this.db.execute(sql`SELECT payment_phone, payment_qr_url FROM payment_setting ORDER BY created_at ASC LIMIT 1`);
-    if (!rows.length) return { ...DEFAULT_SITE_SETTINGS, paymentPhone: paymentRows[0]?.payment_phone || '', paymentQrUrl: paymentRows[0]?.payment_qr_url || '' };
+    const paymentRows: any[] = await this.db.execute(sql`SELECT payment_recipient_name, payment_phone, payment_qr_url FROM payment_setting ORDER BY created_at ASC LIMIT 1`);
+    if (!rows.length) return { ...DEFAULT_SITE_SETTINGS, paymentRecipientName: paymentRows[0]?.payment_recipient_name || '', paymentPhone: paymentRows[0]?.payment_phone || '', paymentQrUrl: paymentRows[0]?.payment_qr_url || '' };
     const row = rows[0];
-    return { siteName: row.siteName, siteLogoUrl: row.siteLogoUrl, customerServicePhone: row.customerServicePhone, paymentPhone: paymentRows[0]?.payment_phone || '', paymentQrUrl: paymentRows[0]?.payment_qr_url || '', icpInfo: row.icpInfo, copyrightInfo: row.copyrightInfo };
+    return { siteName: row.siteName, siteLogoUrl: row.siteLogoUrl, customerServicePhone: row.customerServicePhone, paymentRecipientName: paymentRows[0]?.payment_recipient_name || '', paymentPhone: paymentRows[0]?.payment_phone || '', paymentQrUrl: paymentRows[0]?.payment_qr_url || '', icpInfo: row.icpInfo, copyrightInfo: row.copyrightInfo };
   }
 
   async saveSiteSettings(dto: SiteSettings): Promise<{ success: true }> {
@@ -42,8 +42,8 @@ export class AdminSettingService {
     if (!existing.length) await this.db.insert(siteSetting).values({ siteName: dto.siteName, siteLogoUrl: dto.siteLogoUrl, customerServicePhone: dto.customerServicePhone, icpInfo: dto.icpInfo, copyrightInfo: dto.copyrightInfo });
     else await this.db.update(siteSetting).set({ siteName: dto.siteName, siteLogoUrl: dto.siteLogoUrl, customerServicePhone: dto.customerServicePhone, icpInfo: dto.icpInfo, copyrightInfo: dto.copyrightInfo }).where(eq(siteSetting.id, existing[0].id));
     const paymentRows: any[] = await this.db.execute(sql`SELECT id FROM payment_setting ORDER BY created_at ASC LIMIT 1`);
-    if (!paymentRows.length) await this.db.execute(sql`INSERT INTO payment_setting (payment_phone, payment_qr_url) VALUES (${dto.paymentPhone || ''}, ${dto.paymentQrUrl || ''})`);
-    else await this.db.execute(sql`UPDATE payment_setting SET payment_phone = ${dto.paymentPhone || ''}, payment_qr_url = ${dto.paymentQrUrl || ''}, updated_at = CURRENT_TIMESTAMP WHERE id = ${paymentRows[0].id}`);
+    if (!paymentRows.length) await this.db.execute(sql`INSERT INTO payment_setting (payment_recipient_name, payment_phone, payment_qr_url) VALUES (${dto.paymentRecipientName || ''}, ${dto.paymentPhone || ''}, ${dto.paymentQrUrl || ''})`);
+    else await this.db.execute(sql`UPDATE payment_setting SET payment_recipient_name = ${dto.paymentRecipientName || ''}, payment_phone = ${dto.paymentPhone || ''}, payment_qr_url = ${dto.paymentQrUrl || ''}, updated_at = CURRENT_TIMESTAMP WHERE id = ${paymentRows[0].id}`);
     return { success: true };
   }
 
