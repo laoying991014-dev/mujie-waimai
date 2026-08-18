@@ -52,6 +52,8 @@ export class AdminMerchantController {
       shopName: string;
       contactName: string;
       contactPhone: string;
+      paymentRecipientName?: string;
+      paymentPhone?: string;
       address: string;
       categoryId?: string;
       deliveryFee: string;
@@ -69,6 +71,8 @@ export class AdminMerchantController {
       shopName?: string;
       contactName?: string;
       contactPhone?: string;
+      paymentRecipientName?: string;
+      paymentPhone?: string;
       address?: string;
       categoryId?: string;
       deliveryFee?: string;
