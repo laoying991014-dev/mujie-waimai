@@ -6,7 +6,7 @@ import type { BannerFull, NoticeItemFull, PaginatedResponse, SiteSettings } from
 
 interface CreateNoticeDto { title: string; content: string; status: 'published' | 'draft'; }
 interface UpdateNoticeDto { title: string; content: string; status: 'published' | 'draft'; }
-interface CreateBannerDto { title: string; imageUrl: string; linkUrl: string; sortOrder: number; }
+interface CreateBannerDto { title: string; content?: string; imageUrl: string; linkUrl: string; sortOrder: number; }
 interface UpdateBannerDto { title: string; imageUrl: string; linkUrl: string; sortOrder: number; status: 'active' | 'inactive'; }
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = { siteName: '南坎极速外卖', siteLogoUrl: '', customerServicePhone: '', paymentPhone: '', paymentQrUrl: '', icpInfo: '', copyrightInfo: '' };
@@ -18,6 +18,12 @@ export class AdminSettingService {
     const offset = (page - 1) * pageSize;
     const [itemsResult, totalResult] = await Promise.all([this.db.select({ id: notice.id, title: notice.title, status: notice.status, createdAt: notice.createdAt }).from(notice).orderBy(desc(notice.createdAt)).limit(pageSize).offset(offset), this.db.select({ count: count() }).from(notice)]);
     return { items: itemsResult.map((row) => ({ id: row.id, title: row.title, status: row.status as 'published' | 'draft', createdAt: row.createdAt.toISOString() })), total: Number(totalResult[0]?.count ?? 0), page, pageSize };
+  }
+  async getNoticeDetail(id: string): Promise<NoticeItemFull & { content: string }> {
+    const result = await this.db.select({ id: notice.id, title: notice.title, content: notice.content, status: notice.status, createdAt: notice.createdAt }).from(notice).where(eq(notice.id, id)).limit(1);
+    if (!result.length) throw new NotFoundException('公告不存在');
+    const row = result[0];
+    return { id: row.id, title: row.title, content: row.content, status: row.status as 'published' | 'draft', createdAt: row.createdAt.toISOString() };
   }
   async createNotice(dto: CreateNoticeDto): Promise<{ id: string }> { const result = await this.db.insert(notice).values(dto).returning({ id: notice.id }); return { id: result[0].id }; }
   async updateNotice(id: string, dto: UpdateNoticeDto): Promise<{ success: true }> { const result = await this.db.update(notice).set(dto).where(eq(notice.id, id)).returning({ id: notice.id }); if (!result.length) throw new NotFoundException('公告不存在'); return { success: true }; }
