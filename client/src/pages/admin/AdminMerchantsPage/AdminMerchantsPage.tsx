@@ -56,6 +56,8 @@ interface FormState {
   shopName: string;
   contactName: string;
   contactPhone: string;
+  paymentRecipientName: string;
+  paymentPhone: string;
   address: string;
   categoryId: string;
   deliveryFee: string;
@@ -91,6 +93,8 @@ const AdminMerchantsPage: React.FC = () => {
     shopName: '',
     contactName: '',
     contactPhone: '',
+    paymentRecipientName: '',
+    paymentPhone: '',
     address: '',
     categoryId: '',
     deliveryFee: '',
@@ -178,6 +182,8 @@ const AdminMerchantsPage: React.FC = () => {
       shopName: merchant.shopName,
       contactName: merchant.contactName,
       contactPhone: merchant.contactPhone,
+      paymentRecipientName: merchant.paymentRecipientName || '',
+      paymentPhone: merchant.paymentPhone || '',
       address: '',
       categoryId: '',
       deliveryFee: '',
@@ -205,6 +211,8 @@ const AdminMerchantsPage: React.FC = () => {
           shopName: formData.shopName,
           contactName: formData.contactName,
           contactPhone: formData.contactPhone,
+          paymentRecipientName: formData.paymentRecipientName,
+          paymentPhone: formData.paymentPhone,
           address: formData.address,
           categoryId: formData.categoryId || undefined,
           deliveryFee: formData.deliveryFee,
@@ -218,6 +226,8 @@ const AdminMerchantsPage: React.FC = () => {
           shopName: formData.shopName,
           contactName: formData.contactName,
           contactPhone: formData.contactPhone,
+          paymentRecipientName: formData.paymentRecipientName,
+          paymentPhone: formData.paymentPhone,
           address: formData.address,
           categoryId: formData.categoryId,
           deliveryFee: formData.deliveryFee,
@@ -615,6 +625,28 @@ const AdminMerchantsPage: React.FC = () => {
                     setFormData({ ...formData, contactPhone: e.target.value })
                   }
                   placeholder="请输入联系电话"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">收款人姓名</label>
+                <Input
+                  value={formData.paymentRecipientName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, paymentRecipientName: e.target.value })
+                  }
+                  placeholder="请输入收款人姓名"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">收款人手机号</label>
+                <Input
+                  value={formData.paymentPhone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, paymentPhone: e.target.value })
+                  }
+                  placeholder="请输入收款人手机号"
                 />
               </div>
             </div>
