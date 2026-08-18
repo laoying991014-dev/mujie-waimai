@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
-import { count, eq, ilike, and, desc } from 'drizzle-orm';
+import { count, eq, ilike, and, desc, sql } from 'drizzle-orm';
 import * as bcrypt from 'bcryptjs';
 import { merchant } from '@server/database/schema';
 import type { AdminMerchant, PaginatedResponse } from '@shared/api.interface';
@@ -17,6 +17,8 @@ interface CreateMerchantDto {
   shopName: string;
   contactName: string;
   contactPhone: string;
+  paymentRecipientName?: string;
+  paymentPhone?: string;
   address: string;
   categoryId?: string;
   deliveryFee: string;
@@ -27,6 +29,8 @@ interface UpdateMerchantDto {
   shopName?: string;
   contactName?: string;
   contactPhone?: string;
+  paymentRecipientName?: string;
+  paymentPhone?: string;
   address?: string;
   categoryId?: string;
   deliveryFee?: string;
@@ -72,6 +76,8 @@ export class AdminMerchantService {
           shopLogoUrl: merchant.shopLogoUrl,
           contactName: merchant.contactName,
           contactPhone: merchant.contactPhone,
+          paymentRecipientName: sql<string>`payment_recipient_name`.as('paymentRecipientName'),
+          paymentPhone: sql<string>`payment_phone`.as('paymentPhone'),
           auditStatus: merchant.auditStatus,
           businessStatus: merchant.businessStatus,
           status: merchant.status,
@@ -91,6 +97,8 @@ export class AdminMerchantService {
       shopLogoUrl: item.shopLogoUrl,
       contactName: item.contactName,
       contactPhone: item.contactPhone,
+      paymentRecipientName: item.paymentRecipientName ?? '',
+      paymentPhone: item.paymentPhone ?? '',
       auditStatus: item.auditStatus as 'pending' | 'approved' | 'rejected',
       businessStatus: item.businessStatus as 'open' | 'closed',
       status: item.status as 'active' | 'disabled',
@@ -138,6 +146,13 @@ export class AdminMerchantService {
       })
       .returning({ id: merchant.id });
 
+    await this.db.execute(sql`
+      UPDATE merchant
+      SET payment_recipient_name = ${dto.paymentRecipientName ?? dto.contactName},
+          payment_phone = ${dto.paymentPhone ?? dto.contactPhone}
+      WHERE id = ${result[0].id}
+    `);
+
     return { id: result[0].id };
   }
 
@@ -151,18 +166,53 @@ export class AdminMerchantService {
     if (dto.deliveryFee !== undefined) updateData.deliveryFee = dto.deliveryFee;
     if (dto.minOrderAmount !== undefined) updateData.minOrderAmount = dto.minOrderAmount;
 
-    if (Object.keys(updateData).length === 0) {
+    const hasPaymentFields =
+      dto.paymentRecipientName !== undefined || dto.paymentPhone !== undefined;
+
+    if (Object.keys(updateData).length > 0) {
+      const result = await this.db
+        .update(merchant)
+        .set(updateData)
+        .where(eq(merchant.id, id))
+        .returning({ id: merchant.id });
+
+      if (result.length === 0) {
+        throw new NotFoundException('商家不存在');
+      }
+    } else if (hasPaymentFields) {
+      const exists = await this.db
+        .select({ id: merchant.id })
+        .from(merchant)
+        .where(eq(merchant.id, id))
+        .limit(1);
+      if (exists.length === 0) {
+        throw new NotFoundException('商家不存在');
+      }
+    } else {
       return { success: true };
     }
 
-    const result = await this.db
-      .update(merchant)
-      .set(updateData)
-      .where(eq(merchant.id, id))
-      .returning({ id: merchant.id });
-
-    if (result.length === 0) {
-      throw new NotFoundException('商家不存在');
+    if (hasPaymentFields) {
+      if (dto.paymentRecipientName !== undefined && dto.paymentPhone !== undefined) {
+        await this.db.execute(sql`
+          UPDATE merchant
+          SET payment_recipient_name = ${dto.paymentRecipientName},
+              payment_phone = ${dto.paymentPhone}
+          WHERE id = ${id}
+        `);
+      } else if (dto.paymentRecipientName !== undefined) {
+        await this.db.execute(sql`
+          UPDATE merchant
+          SET payment_recipient_name = ${dto.paymentRecipientName}
+          WHERE id = ${id}
+        `);
+      } else if (dto.paymentPhone !== undefined) {
+        await this.db.execute(sql`
+          UPDATE merchant
+          SET payment_phone = ${dto.paymentPhone}
+          WHERE id = ${id}
+        `);
+      }
     }
 
     return { success: true };
