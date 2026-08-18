@@ -326,7 +326,9 @@ const ProfilePage: React.FC = () => {
         <MenuItem
           icon={<Phone className="w-5 h-5 text-primary" />}
           label="联系客服"
-          onClick={() => {}}
+          onClick={() => {
+            window.location.href = 'https://t.me/KDLK000888';
+          }}
           arrow
         />
       </div>
