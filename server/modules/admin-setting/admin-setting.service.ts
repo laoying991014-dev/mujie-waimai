@@ -6,7 +6,7 @@ import type { BannerFull, NoticeItemFull, PaginatedResponse, SiteSettings } from
 
 interface CreateNoticeDto { title: string; content: string; status: 'published' | 'draft'; }
 interface UpdateNoticeDto { title: string; content: string; status: 'published' | 'draft'; }
-interface CreateBannerDto { title: string; content?: string; imageUrl: string; linkUrl: string; sortOrder: number; }
+interface CreateBannerDto { title: string; imageUrl: string; linkUrl: string; sortOrder: number; }
 interface UpdateBannerDto { title: string; imageUrl: string; linkUrl: string; sortOrder: number; status: 'active' | 'inactive'; }
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = { siteName: '南坎极速外卖', siteLogoUrl: '', customerServicePhone: '', paymentPhone: '', paymentQrUrl: '', icpInfo: '', copyrightInfo: '' };
