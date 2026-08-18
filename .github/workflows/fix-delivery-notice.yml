@@ -1,0 +1,168 @@
+name: Fix delivery notice click
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply delivery notice feature
+        shell: python
+        run: |
+          from pathlib import Path
+
+          # Public API: return the latest published notice titled 配送说明.
+          controller = Path('server/modules/admin-setting/delivery-notice.controller.ts')
+          controller.write_text('''import { Controller, Get } from '@nestjs/common';
+import { AdminSettingService } from './admin-setting.service';
+
+@Controller('api')
+export class DeliveryNoticeController {
+  constructor(private readonly adminSettingService: AdminSettingService) {}
+
+  @Get('delivery-notice')
+  async getDeliveryNotice(): Promise<{ title: string; content: string }> {
+    return this.adminSettingService.getDeliveryNotice();
+  }
+}
+''', encoding='utf-8')
+
+          # Register the public controller.
+          module = Path('server/modules/admin-setting/admin-setting.module.ts')
+          text = module.read_text(encoding='utf-8')
+          if "./delivery-notice.controller" not in text:
+              text = text.replace(
+                  "import { AdminSettingService } from './admin-setting.service';",
+                  "import { AdminSettingService } from './admin-setting.service';\nimport { DeliveryNoticeController } from './delivery-notice.controller';"
+              )
+          text = text.replace(
+              "controllers: [AdminSettingController],",
+              "controllers: [AdminSettingController, DeliveryNoticeController],"
+          )
+          module.write_text(text, encoding='utf-8')
+
+          # Add service method if it is not already present.
+          service = Path('server/modules/admin-setting/admin-setting.service.ts')
+          text = service.read_text(encoding='utf-8')
+          if "async getDeliveryNotice()" not in text:
+              marker = "  async getSiteSettings(): Promise<SiteSettings> {"
+              method = '''  async getDeliveryNotice(): Promise<{ title: string; content: string }> {
+    const rows = await this.db.select({ title: notice.title, content: notice.content })
+      .from(notice)
+      .where(eq(notice.title, '配送说明'))
+      .orderBy(desc(notice.createdAt))
+      .limit(1);
+    if (!rows.length) return { title: '配送说明', content: '暂无配送说明' };
+    return { title: rows[0].title, content: rows[0].content };
+  }
+
+'''
+              if marker not in text:
+                  raise SystemExit('Could not find getSiteSettings marker')
+              text = text.replace(marker, method + marker, 1)
+              service.write_text(text, encoding='utf-8')
+
+          # Make the existing 关于我们 item open a dialog and load the configured text.
+          profile = Path('client/src/pages/ProfilePage/ProfilePage.tsx')
+          text = profile.read_text(encoding='utf-8')
+
+          if "const [deliveryDialogOpen" not in text:
+              text = text.replace(
+                  "  const [logoutOpen, setLogoutOpen] = useState(false);",
+                  "  const [logoutOpen, setLogoutOpen] = useState(false);\n  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);\n  const [deliveryLoading, setDeliveryLoading] = useState(false);\n  const [deliveryContent, setDeliveryContent] = useState('');"
+              )
+
+          if "const handleDeliveryInfo" not in text:
+              text = text.replace(
+                  "  const handleLogout = (): void => {",
+                  """  const handleDeliveryInfo = async (): Promise<void> => {
+    setDeliveryDialogOpen(true);
+    try {
+      setDeliveryLoading(true);
+      const response = await fetch('/api/delivery-notice');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = (await response.json()) as { title?: string; content?: string };
+      setDeliveryContent(data.content || '暂无配送说明');
+    } catch (err) {
+      logger.error('load delivery notice failed', err);
+      setDeliveryContent('暂时无法获取配送说明，请稍后再试。');
+    } finally {
+      setDeliveryLoading(false);
+    }
+  };
+
+  const handleLogout = (): void => {"""
+              )
+
+          old_menu = '''        <MenuItem
+          icon={<Info className="w-5 h-5 text-primary" />}
+          label="关于我们"
+          onClick={() => {}}
+          arrow
+        />'''
+          new_menu = '''        <MenuItem
+          icon={<Info className="w-5 h-5 text-primary" />}
+          label="配送说明"
+          onClick={() => void handleDeliveryInfo()}
+          arrow
+        />'''
+          if old_menu in text:
+              text = text.replace(old_menu, new_menu, 1)
+          else:
+              text = text.replace('label="关于我们"', 'label="配送说明"', 1)
+              text = text.replace('onClick={() => {}}', 'onClick={() => void handleDeliveryInfo()}', 1)
+
+          dialog_marker = "      {/* Logout confirm dialog */}"
+          if "Delivery notice dialog" not in text:
+              dialog = '''      {/* Delivery notice dialog */}
+      <Dialog open={deliveryDialogOpen} onOpenChange={setDeliveryDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>配送说明</DialogTitle>
+            <DialogDescription>平台最新配送说明</DialogDescription>
+          </DialogHeader>
+          <div className="whitespace-pre-wrap text-sm leading-7 text-foreground min-h-24">
+            {deliveryLoading ? '加载中...' : deliveryContent}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setDeliveryDialogOpen(false)}>知道了</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+'''
+              if dialog_marker not in text:
+                  raise SystemExit('Could not find logout dialog marker')
+              text = text.replace(dialog_marker, dialog + dialog_marker, 1)
+
+          profile.write_text(text, encoding='utf-8')
+
+      - name: Verify
+        shell: bash
+        run: |
+          git diff --check
+          grep -q "DeliveryNoticeController" server/modules/admin-setting/admin-setting.module.ts
+          grep -q "async getDeliveryNotice" server/modules/admin-setting/admin-setting.service.ts
+          grep -q "label=\"配送说明\"" client/src/pages/ProfilePage/ProfilePage.tsx
+          grep -q "deliveryDialogOpen" client/src/pages/ProfilePage/ProfilePage.tsx
+
+      - name: Commit changes and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add server/modules/admin-setting/admin-setting.module.ts server/modules/admin-setting/admin-setting.service.ts server/modules/admin-setting/delivery-notice.controller.ts client/src/pages/ProfilePage/ProfilePage.tsx
+          git commit -m 'fix: enable customer delivery notice' || true
+          git rm .github/workflows/fix-delivery-notice.yml
+          git commit -m 'chore: remove delivery notice workflow' || true
+          git push
