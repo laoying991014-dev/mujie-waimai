@@ -31,7 +31,6 @@ else
   psql "$DATABASE_URL" -f /app/deploy/sql/03_seed_extra.sql 2>&1
   echo "03_seed_extra.sql 执行完成"
   echo "数据库初始化完成！"
-  # 验证数据
   VERIFY_COUNT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM merchant;" 2>&1 | tr -d '[:space:]' || echo "ERROR")
   echo "初始化后商家数量: $VERIFY_COUNT"
 fi
@@ -48,6 +47,11 @@ if [ "$RIDER_EXISTS" != "rider" ]; then
 else
   echo "rider 表已存在，跳过迁移"
 fi
+
+# 收款设置迁移：为已有 payment_setting 表补充收款人姓名字段
+# IF NOT EXISTS 可重复执行，不会影响已有数据
+psql "$DATABASE_URL" -c "ALTER TABLE payment_setting ADD COLUMN IF NOT EXISTS payment_recipient_name varchar(100) NOT NULL DEFAULT '';" 2>&1
+echo "收款人姓名字段检查完成"
 
 # 重置管理员密码（确保可以登录）
 echo "重置管理员密码..."
