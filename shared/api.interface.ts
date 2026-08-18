@@ -97,7 +97,7 @@ export interface AdminOverview { totalUsers: number; totalMerchants: number; tot
 export interface TrendItem { date: string; count?: number; amount?: string; }
 export interface AdminTrends { orderTrend: TrendItem[]; revenueTrend: TrendItem[]; }
 export interface AdminUser { id: string; nickname: string; avatarUrl: string; phone: string; status: 'active' | 'disabled'; createdAt: string; }
-export interface AdminMerchant { id: string; shopName: string; shopLogoUrl: string; contactName: string; contactPhone: string; auditStatus: 'pending' | 'approved' | 'rejected'; businessStatus: 'open' | 'closed'; status: 'active' | 'disabled'; createdAt: string; }
+export interface AdminMerchant { id: string; shopName: string; shopLogoUrl: string; contactName: string; contactPhone: string; paymentRecipientName: string; paymentPhone: string; auditStatus: 'pending' | 'approved' | 'rejected'; businessStatus: 'open' | 'closed'; status: 'active' | 'disabled'; createdAt: string; }
 export interface AdminProduct { id: string; name: string; mainImageUrl: string; merchantId: string; merchantName: string; categoryName: string; price: string; monthSales: number; status: 'on_sale' | 'off_sale'; }
 export interface AdminOrder { id: string; orderNo: string; merchantName: string; userName: string; productCount: number; totalAmount: string; status: string; createdAt: string; paymentLast5?: string; }
 export interface AdminOrderDetail {
