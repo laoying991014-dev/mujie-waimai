@@ -1,0 +1,78 @@
+name: Fix merchant payment sync
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch payment source to merchant settings
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('server/modules/order/order.service.ts')
+          text = path.read_text(encoding='utf-8')
+          start = text.index('  async getPaymentInfo(')
+          end = text.index('  async submitPayment(', start)
+          new_method = '''  async getPaymentInfo(userId: string, orderId: string) {
+    const rows = await this.db
+      .select({
+        id: orderInfo.id,
+        orderNo: orderInfo.orderNo,
+        totalAmount: orderInfo.totalAmount,
+        status: orderInfo.status,
+        userId: orderInfo.userId,
+        merchantId: orderInfo.merchantId,
+      })
+      .from(orderInfo)
+      .where(eq(orderInfo.id, orderId))
+      .limit(1);
+    if (!rows.length) throw new NotFoundException('订单不存在');
+    if (rows[0].userId !== userId) throw new ForbiddenException('无权查看该订单');
+
+    // 支付信息必须读取当前订单所属商家的收款设置，不能读取平台统一收款设置。
+    const merchantRows: any[] = await this.db.execute(sql`
+      SELECT payment_recipient_name, payment_phone
+      FROM merchant
+      WHERE id = ${rows[0].merchantId}
+      LIMIT 1
+    `);
+    const paymentRows: any[] = await this.db.execute(sql`SELECT last5, submitted_at, verified_at FROM order_payment WHERE order_id = ${orderId} LIMIT 1`);
+    const p = paymentRows[0];
+    const m = merchantRows[0];
+
+    return {
+      orderId,
+      orderNo: rows[0].orderNo,
+      totalAmount: String(rows[0].totalAmount),
+      status: rows[0].status,
+      paymentRecipientName: m?.payment_recipient_name || '',
+      paymentPhone: m?.payment_phone || '',
+      paymentQrUrl: '',
+      paymentLast5: p?.last5 || undefined,
+      paymentSubmittedAt: p?.submitted_at ? new Date(p.submitted_at).toISOString() : undefined,
+      paymentVerifiedAt: p?.verified_at ? new Date(p.verified_at).toISOString() : undefined,
+    };
+  }
+
+'''
+          path.write_text(text[:start] + new_method + text[end:], encoding='utf-8')
+      - name: Commit and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add server/modules/order/order.service.ts .github/workflows/fix-merchant-payment-sync.yml
+          git rm .github/workflows/fix-merchant-payment-sync.yml
+          git commit -m 'fix: sync merchant payment recipient to customer payment page'
+          git push
