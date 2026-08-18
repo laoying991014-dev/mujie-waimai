@@ -10,6 +10,7 @@ import type { BannerFull, NoticeItemFull, PaginatedResponse, SiteSettings } from
 export class AdminSettingController {
   constructor(private readonly adminSettingService: AdminSettingService) {}
   @Get('notices') async listNotices(@Query('page') page = '1', @Query('pageSize') pageSize = '10'): Promise<PaginatedResponse<NoticeItemFull>> { return this.adminSettingService.listNotices(parseInt(page, 10), parseInt(pageSize, 10)); }
+  @Get('notices/:id') async getNoticeDetail(@Param('id') id: string): Promise<NoticeItemFull & { content: string }> { return this.adminSettingService.getNoticeDetail(id); }
   @Post('notices') async createNotice(@Body() dto: { title: string; content: string; status: 'published' | 'draft' }): Promise<{ id: string }> { return this.adminSettingService.createNotice(dto); }
   @Put('notices/:id') async updateNotice(@Param('id') id: string, @Body() dto: { title: string; content: string; status: 'published' | 'draft' }): Promise<{ success: true }> { return this.adminSettingService.updateNotice(id, dto); }
   @Delete('notices/:id') async deleteNotice(@Param('id') id: string): Promise<{ success: true }> { return this.adminSettingService.deleteNotice(id); }
