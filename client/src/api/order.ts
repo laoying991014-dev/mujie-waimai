@@ -16,6 +16,11 @@ export async function getOrderDetail(id: string): Promise<OrderDetail> {
   return data;
 }
 
+export async function deleteOrder(id: string): Promise<{ success: true }> {
+  const { data } = await axiosForBackend.delete(`/api/orders/${id}`);
+  return data;
+}
+
 export async function cancelOrder(id: string, reason: string): Promise<{ success: true; status: string }> {
   const { data } = await axiosForBackend.post(`/api/orders/${id}/cancel`, { reason });
   return data;
