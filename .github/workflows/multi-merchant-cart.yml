@@ -1,0 +1,288 @@
+name: Multi merchant cart upgrade
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply multi-merchant cart changes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+
+          # 1) Shared cart/order interfaces.
+          p = root / 'shared/api.interface.ts'
+          s = p.read_text()
+          old = "export interface CartItem { id: string; productId: string; productName: string; productImageUrl: string; price: string; quantity: number; subtotal: string; }\nexport interface CartInfo { merchantId: string; merchantName: string; deliveryFee: string; items: CartItem[]; productTotal: string; }"
+          new = "export interface CartItem { id: string; productId: string; productName: string; productImageUrl: string; price: string; quantity: number; subtotal: string; merchantId?: string; merchantName?: string; merchantDeliveryFee?: string; }\nexport interface CartMerchantGroup { merchantId: string; merchantName: string; deliveryFee: string; items: CartItem[]; productTotal: string; totalAmount: string; status: 'pending_payment'; }\nexport interface CartInfo { merchantId: string; merchantName: string; deliveryFee: string; items: CartItem[]; productTotal: string; merchants: CartMerchantGroup[]; deliveryTotal: string; grandTotal: string; }"
+          if old not in s:
+              raise SystemExit('shared/api.interface.ts cart interfaces not found')
+          p.write_text(s.replace(old, new))
+
+          # 2) Backend cart: allow multiple merchants and group totals. Each merchant adds one 5000 Ky delivery fee.
+          p = root / 'server/modules/cart/cart.service.ts'
+          s = p.read_text()
+          start = s.index('  async getCart(userId: string): Promise<CartInfo> {')
+          end = s.index('\n  async addItem(', start)
+          get_method = '''  async getCart(userId: string): Promise<CartInfo> {
+            const rows = await this.db
+              .select({
+                id: cartItem.id,
+                productId: cartItem.productId,
+                productName: product.name,
+                productImageUrl: product.mainImageUrl,
+                price: product.price,
+                quantity: cartItem.quantity,
+                merchantId: cartItem.merchantId,
+                merchantName: merchant.shopName,
+              })
+              .from(cartItem)
+              .innerJoin(product, eq(cartItem.productId, product.id))
+              .innerJoin(merchant, eq(cartItem.merchantId, merchant.id))
+              .where(eq(cartItem.userId, userId));
+
+            if (rows.length === 0) {
+              return { merchantId: '', merchantName: '', deliveryFee: '0', items: [], productTotal: '0', merchants: [], deliveryTotal: '0', grandTotal: '0' };
+            }
+
+            const items: CartItem[] = rows.map((row) => {
+              const price = String(row.price);
+              const subtotal = (Number(price) * Number(row.quantity)).toFixed(2);
+              return {
+                id: row.id,
+                productId: row.productId,
+                productName: row.productName,
+                productImageUrl: row.productImageUrl,
+                price,
+                quantity: row.quantity,
+                subtotal,
+                merchantId: row.merchantId,
+                merchantName: row.merchantName,
+                merchantDeliveryFee: '5000.00',
+              };
+            });
+
+            const grouped = new Map<string, { merchantId: string; merchantName: string; items: CartItem[] }>();
+            for (const item of items) {
+              const key = item.merchantId || '';
+              if (!grouped.has(key)) grouped.set(key, { merchantId: key, merchantName: item.merchantName || '', items: [] });
+              grouped.get(key)!.items.push(item);
+            }
+
+            const merchants = Array.from(grouped.values()).map((group) => {
+              const productTotal = group.items.reduce((sum, item) => sum + Number(item.subtotal), 0);
+              const deliveryFee = 5000;
+              return {
+                merchantId: group.merchantId,
+                merchantName: group.merchantName,
+                deliveryFee: deliveryFee.toFixed(2),
+                items: group.items,
+                productTotal: productTotal.toFixed(2),
+                totalAmount: (productTotal + deliveryFee).toFixed(2),
+                status: 'pending_payment' as const,
+              };
+            });
+
+            const productTotal = merchants.reduce((sum, group) => sum + Number(group.productTotal), 0);
+            const deliveryTotal = merchants.reduce((sum, group) => sum + Number(group.deliveryFee), 0);
+            return {
+              merchantId: merchants[0]?.merchantId || '',
+              merchantName: merchants[0]?.merchantName || '',
+              deliveryFee: merchants[0]?.deliveryFee || '0',
+              items,
+              productTotal: productTotal.toFixed(2),
+              merchants,
+              deliveryTotal: deliveryTotal.toFixed(2),
+              grandTotal: (productTotal + deliveryTotal).toFixed(2),
+            };
+          }
+'''
+          s = s[:start] + get_method + s[end:]
+
+          old_block = '''    // Check merchant consistency
+    const existingRows = await this.db
+      .select({ merchantId: cartItem.merchantId })
+      .from(cartItem)
+      .where(eq(cartItem.userId, userId))
+      .limit(1);
+
+    const currentMerchantId = existingRows[0]?.merchantId;
+    if (currentMerchantId && currentMerchantId !== prod.merchantId) {
+      // Clear old merchant's cart
+      await this.db.delete(cartItem).where(eq(cartItem.userId, userId));
+    }
+
+'''
+          if old_block not in s:
+              raise SystemExit('cart merchant consistency block not found')
+          s = s.replace(old_block, '')
+          p.write_text(s)
+
+          # 3) Add a batch-order endpoint that creates one independent pending-payment order per merchant.
+          p = root / 'server/modules/order/order.service.ts'
+          s = p.read_text()
+          marker = '\n  async getOrders(userId: string, pageRaw: number, pageSizeRaw: number, statusFilter?: string):'
+          if marker not in s:
+              raise SystemExit('order service insertion marker not found')
+          method = '''
+
+  async createOrdersFromCart(userId: string, addressId: string, remark?: string): Promise<{ orders: { orderId: string; orderNo: string; merchantId: string; totalAmount: string; status: string }[] }> {
+    const cartRows = await this.db.select({
+      id: cartItem.id, productId: cartItem.productId, merchantId: cartItem.merchantId, quantity: cartItem.quantity,
+      productName: product.name, productImageUrl: product.mainImageUrl, price: product.price, stock: product.stock, status: product.status,
+    }).from(cartItem).innerJoin(product, eq(cartItem.productId, product.id)).where(eq(cartItem.userId, userId));
+    if (cartRows.length === 0) throw new BadRequestException('购物车为空');
+
+    const addrRows = await this.db.select({ receiverName: address.receiverName, receiverPhone: address.receiverPhone, province: address.province, city: address.city, district: address.district, detailAddress: address.detailAddress })
+      .from(address).where(and(eq(address.id, addressId), eq(address.userId, userId))).limit(1);
+    if (addrRows.length === 0) throw new BadRequestException('地址不存在');
+    const addr = addrRows[0];
+    const receiverAddress = `${addr.province}${addr.city}${addr.district}${addr.detailAddress}`;
+
+    const groups = new Map<string, typeof cartRows>();
+    for (const item of cartRows) {
+      if (item.status !== 'on_sale') throw new BadRequestException(`商品 ${item.productName} 已下架`);
+      if (item.stock < item.quantity) throw new BadRequestException(`商品 ${item.productName} 库存不足`);
+      if (!groups.has(item.merchantId)) groups.set(item.merchantId, [] as any);
+      groups.get(item.merchantId)!.push(item);
+    }
+
+    const result = await this.db.transaction(async (tx) => {
+      const created: { orderId: string; orderNo: string; merchantId: string; totalAmount: string; status: string }[] = [];
+      for (const [merchantId, merchantItems] of groups.entries()) {
+        let productTotal = 0;
+        for (const item of merchantItems) productTotal += Number(item.price) * item.quantity;
+        const deliveryFee = 5000;
+        const totalAmount = productTotal + deliveryFee;
+        const orderNo = this.generateOrderNo();
+        const inserted = await tx.insert(orderInfo).values({
+          orderNo, userId, merchantId, productTotal: productTotal.toFixed(2), deliveryFee: deliveryFee.toFixed(2), totalAmount: totalAmount.toFixed(2),
+          receiverName: addr.receiverName, receiverPhone: addr.receiverPhone, receiverAddress, status: 'pending_payment', remark: remark || '', cancelReason: '',
+        }).returning({ id: orderInfo.id, status: orderInfo.status });
+        const orderId = inserted[0].id;
+        await tx.insert(orderItem).values(merchantItems.map((item) => ({
+          orderId, productId: item.productId, productName: item.productName, productImageUrl: item.productImageUrl, price: String(item.price), quantity: item.quantity,
+          subtotal: (Number(item.price) * item.quantity).toFixed(2),
+        })));
+        for (const item of merchantItems) {
+          const updated = await tx.update(product).set({ stock: sql`${product.stock} - ${item.quantity}` })
+            .where(and(eq(product.id, item.productId), sql`${product.stock} >= ${item.quantity}`)).returning({ id: product.id });
+          if (updated.length === 0) throw new BadRequestException(`商品 ${item.productName} 库存不足`);
+        }
+        await tx.execute(sql`INSERT INTO order_payment (order_id) VALUES (${orderId}) ON CONFLICT (order_id) DO NOTHING`);
+        created.push({ orderId, orderNo, merchantId, totalAmount: totalAmount.toFixed(2), status: inserted[0].status });
+      }
+      await tx.delete(cartItem).where(eq(cartItem.userId, userId));
+      return created;
+    });
+    return { orders: result };
+  }
+'''
+          s = s.replace(marker, method + marker)
+          p.write_text(s)
+
+          # 4) Controller route for batch checkout.
+          p = root / 'server/modules/order/order.controller.ts'
+          s = p.read_text()
+          marker = "\n  @Get()\n  async getOrders"
+          if marker not in s:
+              raise SystemExit('order controller marker not found')
+          route = '''
+  @Post('batch')
+  async createBatchOrders(@Req() req: any, @Body() body: { addressId: string; remark?: string }) {
+    return this.orderService.createOrdersFromCart(req.user.id, body.addressId, body.remark);
+  }
+'''
+          s = s.replace(marker, '\n' + route + marker)
+          p.write_text(s)
+
+          # 5) Client order API.
+          p = root / 'client/src/api/order.ts'
+          s = p.read_text()
+          if 'createBatchOrders' not in s:
+              s += '''\nexport const createBatchOrders = async (addressId: string, remark?: string): Promise<{ orders: { orderId: string; orderNo: string; merchantId: string; totalAmount: string; status: string }[] }> => {\n  const { data } = await axiosForBackend.post('/api/orders/batch', { addressId, remark });\n  return data;\n};\n'''
+          p.write_text(s)
+
+          # 6) Client cart page: group by merchant, show each merchant's 5000 Ky fee, and create all merchant orders together.
+          p = root / 'client/src/pages/CartPage/CartPage.tsx'
+          s = p.read_text()
+          s = s.replace("  const productTotal = useMemo(() => {\n    if (!cart) return 0;\n    return cart.items.reduce((sum: number, it: CartItem) => sum + Number(it.subtotal), 0);\n  }, [cart]);\n\n  const deliveryFee = useMemo(() => {\n    if (!cart) return 0;\n    return Number(cart.deliveryFee) || 0;\n  }, [cart]);\n\n  const totalAmount = productTotal + deliveryFee;", "  const productTotal = Number(cart?.productTotal || 0);\n  const deliveryFee = Number(cart?.deliveryTotal || 0);\n  const totalAmount = Number(cart?.grandTotal || 0);")
+          s = s.replace("      const result = await orderApi.createOrder(selectedAddressId, remark.trim() || undefined);", "      const result = await orderApi.createBatchOrders(selectedAddressId, remark.trim() || undefined);")
+          s = s.replace("      toast.success('下单成功');\n      navigate(`/orders/${result.orderId}`);", "      toast.success(`已生成 ${result.orders.length} 个商家订单，均为待付款`);\n      navigate('/orders');")
+          old_render = re.search(r"      /\* Merchant \+ items \*/.*?      /\* Empty cart \*/", s, re.S)
+          if not old_render:
+              raise SystemExit('cart merchant render block not found')
+          new_render = '''      {/* Merchant groups */}
+      {!empty && cart && (
+        <section className="px-4 pt-3 space-y-3">
+          {cart.merchants.map((group) => (
+            <div key={group.merchantId} className="bg-card rounded-xl p-4 shadow-sm border border-border/50">
+              <div className="flex items-center justify-between pb-3 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <Store className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-foreground">{group.merchantName}</span>
+                </div>
+                <span className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-600">待支付</span>
+              </div>
+              <div>
+                {group.items.map((item, idx) => (
+                  <div key={item.id} className={`flex items-center gap-3 py-3 ${idx === group.items.length - 1 ? '' : 'border-b border-border/50'}`}>
+                    <Image src={item.productImageUrl} alt={item.productName} width={64} height={64} className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-muted" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-foreground font-medium line-clamp-2">{item.productName}</div>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="font-mono font-bold text-primary">¥{Number(item.price).toFixed(2)}</span>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleUpdateQty(item.id, item.quantity - 1)} disabled={item.quantity <= 1} className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-foreground disabled:opacity-40 active:scale-90 transition-transform" aria-label="减少"><Minus className="w-3 h-3" /></button>
+                          <span className="text-sm w-5 text-center font-medium">{item.quantity}</span>
+                          <button onClick={() => handleUpdateQty(item.id, item.quantity + 1)} className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-90 transition-transform" aria-label="增加"><Plus className="w-3 h-3" /></button>
+                          <button onClick={() => handleRemoveItem(item.id)} className="ml-1 text-muted-foreground hover:text-destructive" aria-label="删除"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 pt-3 border-t border-border/50 space-y-1 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">商品小计</span><span className="font-mono">¥{Number(group.productTotal).toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">配送费</span><span className="font-mono">Ks 5,000</span></div>
+                <div className="flex justify-between font-medium"><span>商家订单合计</span><span className="font-mono text-primary">¥{Number(group.totalAmount).toFixed(2)}</span></div>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* Empty cart */}
+'''
+          s = s[:old_render.start()] + new_render + s[old_render.end():]
+          p.write_text(s)
+
+          # Remove this one-shot workflow after successful source changes.
+          wf = root / '.github/workflows/multi-merchant-cart.yml'
+          if wf.exists():
+              wf.unlink()
+
+          print('multi-merchant cart source changes applied')
+
+      - name: Commit generated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add shared/api.interface.ts server/modules/cart/cart.service.ts server/modules/order/order.service.ts server/modules/order/order.controller.ts client/src/api/order.ts client/src/pages/CartPage/CartPage.tsx .github/workflows/multi-merchant-cart.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: support multi-merchant cart orders"
+          git push
