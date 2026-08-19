@@ -64,7 +64,7 @@ const PaymentPage: React.FC = () => {
     <div className="min-h-screen bg-background pb-10">
       <div className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b border-border/50">
         <div className="max-w-lg mx-auto h-12 px-4 flex items-center">
-          <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center" aria-label="返回"><ArrowLeft className="w-5 h-5" /></button>
+          <button onClick={() => navigate('/orders')} className="w-8 h-8 flex items-center justify-center" aria-label="返回订单"><ArrowLeft className="w-5 h-5" /></button>
           <h1 className="flex-1 text-center font-semibold pr-8">订单支付</h1>
           <button onClick={() => load()} className="w-8 h-8 flex items-center justify-center" aria-label="刷新"><RefreshCw className="w-4 h-4" /></button>
         </div>
