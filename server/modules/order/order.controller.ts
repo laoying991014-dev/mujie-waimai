@@ -1,14 +1,20 @@
-import { Controller, Get, Post, Body, Param, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, Req, UseGuards, Inject, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
+import { eq, sql } from 'drizzle-orm';
 import type { OrderDetail, OrderSummary, PaginatedResponse } from '@shared/api.interface';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrderService } from './order.service';
+import { orderInfo, orderItem, product } from '../../database/schema';
 
 @UseGuards(JwtAuthGuard)
 @Roles('user')
 @Controller('api/orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    @Inject(DRIZZLE_DATABASE) private readonly db: PostgresJsDatabase,
+  ) {}
 
   @Post()
   async createOrder(@Req() req: any, @Body() body: { addressId: string; remark?: string }): Promise<{ orderId: string; orderNo: string; status: string }> {
@@ -27,6 +33,33 @@ export class OrderController {
 
   @Post(':id/payment')
   async submitPayment(@Req() req: any, @Param('id') id: string, @Body() body: { last5: string }) { return this.orderService.submitPayment(req.user.id, id, body?.last5 || ''); }
+
+  @Delete(':id')
+  async deleteOrder(@Req() req: any, @Param('id') id: string): Promise<{ success: true }> {
+    const rows = await this.db.select({ id: orderInfo.id, userId: orderInfo.userId, status: orderInfo.status })
+      .from(orderInfo)
+      .where(eq(orderInfo.id, id))
+      .limit(1);
+    if (!rows.length) throw new NotFoundException('订单不存在');
+    if (rows[0].userId !== req.user.id) throw new ForbiddenException('无权删除该订单');
+
+    const status = rows[0].status;
+    const restockStatuses = ['pending_payment', 'payment_review', 'pending_accept'];
+    const itemRows = restockStatuses.includes(status)
+      ? await this.db.select({ productId: orderItem.productId, quantity: orderItem.quantity }).from(orderItem).where(eq(orderItem.orderId, id))
+      : [];
+
+    await this.db.transaction(async (tx) => {
+      for (const item of itemRows) {
+        await tx.update(product).set({ stock: sql`${product.stock} + ${item.quantity}` }).where(eq(product.id, item.productId));
+      }
+      await tx.execute(sql`DELETE FROM order_payment WHERE order_id = ${id}`);
+      await tx.delete(orderItem).where(eq(orderItem.orderId, id));
+      await tx.delete(orderInfo).where(eq(orderInfo.id, id));
+    });
+
+    return { success: true };
+  }
 
   @Get(':id')
   async getOrderDetail(@Req() req: any, @Param('id') id: string): Promise<OrderDetail> { return this.orderService.getOrderDetail(req.user.id, id); }
