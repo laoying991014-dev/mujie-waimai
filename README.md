@@ -28,3 +28,4 @@ docker compose -f deploy/docker-compose.yml up -d --build
 | 管理后台 | admin | 000888 |
 | C 端用户 | 13800138001 | 123456 |
 | 商家端 | xiangwei / tiantian / xiancha | 123456 |
+
