@@ -137,7 +137,9 @@ export class UploadController {
         return response.status(result.status).send('Image not found');
       }
 
-      const contentType = result.headers['content-type'] || 'application/octet-stream';
+      // Axios 的 response headers 类型允许 boolean，但 Express setHeader 不接受 boolean。
+      // 显式转换为字符串，避免生产环境 TypeScript 构建失败。
+      const contentType = String(result.headers['content-type'] || 'application/octet-stream');
       response.setHeader('Content-Type', contentType);
       response.setHeader('Cache-Control', 'public, max-age=3600');
       response.setHeader('X-Content-Type-Options', 'nosniff');
