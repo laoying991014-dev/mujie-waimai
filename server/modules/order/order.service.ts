@@ -59,6 +59,54 @@ export class OrderService {
     return { orderId: result.orderId, orderNo, status: result.status };
   }
 
+  async createOrdersFromCart(userId: string, addressId: string, remark?: string): Promise<{ orders: { orderId: string; orderNo: string; merchantId: string; totalAmount: string; status: string }[] }> {
+    const cartRows = await this.db.select({
+      id: cartItem.id, productId: cartItem.productId, merchantId: cartItem.merchantId, quantity: cartItem.quantity,
+      productName: product.name, productImageUrl: product.mainImageUrl, price: product.price, stock: product.stock, status: product.status,
+    }).from(cartItem).innerJoin(product, eq(cartItem.productId, product.id)).where(eq(cartItem.userId, userId));
+    if (cartRows.length === 0) throw new BadRequestException('购物车为空');
+
+    const addrRows = await this.db.select({ receiverName: address.receiverName, receiverPhone: address.receiverPhone, province: address.province, city: address.city, district: address.district, detailAddress: address.detailAddress })
+      .from(address).where(and(eq(address.id, addressId), eq(address.userId, userId))).limit(1);
+    if (addrRows.length === 0) throw new BadRequestException('地址不存在');
+    const addr = addrRows[0];
+    const receiverAddress = `${addr.province}${addr.city}${addr.district}${addr.detailAddress}`;
+
+    const groups = new Map<string, typeof cartRows>();
+    for (const item of cartRows) {
+      if (item.status !== 'on_sale') throw new BadRequestException(`商品 ${item.productName} 已下架`);
+      if (item.stock < item.quantity) throw new BadRequestException(`商品 ${item.productName} 库存不足`);
+      if (!groups.has(item.merchantId)) groups.set(item.merchantId, [] as any);
+      groups.get(item.merchantId)!.push(item);
+    }
+
+    const result = await this.db.transaction(async (tx) => {
+      const created: { orderId: string; orderNo: string; merchantId: string; totalAmount: string; status: string }[] = [];
+      for (const [merchantId, merchantItems] of groups.entries()) {
+        let productTotal = 0;
+        for (const item of merchantItems) productTotal += Number(item.price) * item.quantity;
+        const deliveryFee = 5000;
+        const totalAmount = productTotal + deliveryFee;
+        const orderNo = this.generateOrderNo();
+        const inserted = await tx.insert(orderInfo).values({
+          orderNo, userId, merchantId, productTotal: productTotal.toFixed(2), deliveryFee: deliveryFee.toFixed(2), totalAmount: totalAmount.toFixed(2),
+          receiverName: addr.receiverName, receiverPhone: addr.receiverPhone, receiverAddress, status: 'pending_payment', remark: remark || '', cancelReason: '',
+        }).returning({ id: orderInfo.id, status: orderInfo.status });
+        const orderId = inserted[0].id;
+        await tx.insert(orderItem).values(merchantItems.map((item) => ({ orderId, productId: item.productId, productName: item.productName, productImageUrl: item.productImageUrl, price: String(item.price), quantity: item.quantity, subtotal: (Number(item.price) * item.quantity).toFixed(2) })));
+        for (const item of merchantItems) {
+          const updated = await tx.update(product).set({ stock: sql`${product.stock} - ${item.quantity}` }).where(and(eq(product.id, item.productId), sql`${product.stock} >= ${item.quantity}`)).returning({ id: product.id });
+          if (updated.length === 0) throw new BadRequestException(`商品 ${item.productName} 库存不足`);
+        }
+        await tx.execute(sql`INSERT INTO order_payment (order_id) VALUES (${orderId}) ON CONFLICT (order_id) DO NOTHING`);
+        created.push({ orderId, orderNo, merchantId, totalAmount: totalAmount.toFixed(2), status: inserted[0].status });
+      }
+      await tx.delete(cartItem).where(eq(cartItem.userId, userId));
+      return created;
+    });
+    return { orders: result };
+  }
+
   async getOrders(userId: string, pageRaw: number, pageSizeRaw: number, statusFilter?: string): Promise<PaginatedResponse<OrderSummary>> {
     const page = Math.max(1, pageRaw); const pageSize = Math.max(1, Math.min(50, pageSizeRaw)); const offset = (page - 1) * pageSize;
     let statuses: string[] | null = null;
@@ -105,34 +153,13 @@ export class OrderService {
   }
 
   async getPaymentInfo(userId: string, orderId: string) {
-    const rows = await this.db.select({
-      id: orderInfo.id,
-      orderNo: orderInfo.orderNo,
-      totalAmount: orderInfo.totalAmount,
-      status: orderInfo.status,
-      userId: orderInfo.userId,
-      merchantId: orderInfo.merchantId,
-    }).from(orderInfo).where(eq(orderInfo.id, orderId)).limit(1);
+    const rows = await this.db.select({ id: orderInfo.id, orderNo: orderInfo.orderNo, totalAmount: orderInfo.totalAmount, status: orderInfo.status, userId: orderInfo.userId, merchantId: orderInfo.merchantId }).from(orderInfo).where(eq(orderInfo.id, orderId)).limit(1);
     if (!rows.length) throw new NotFoundException('订单不存在');
     if (rows[0].userId !== userId) throw new ForbiddenException('无权查看该订单');
-
-    // 客户支付页面必须显示当前订单所属商家的收款信息。
     const merchantRows: any[] = await this.db.execute(sql`SELECT payment_recipient_name, payment_phone FROM merchant WHERE id = ${rows[0].merchantId} LIMIT 1`);
     const paymentRows: any[] = await this.db.execute(sql`SELECT last5, submitted_at, verified_at FROM order_payment WHERE order_id = ${orderId} LIMIT 1`);
-    const p = paymentRows[0];
-    const m = merchantRows[0];
-    return {
-      orderId,
-      orderNo: rows[0].orderNo,
-      totalAmount: String(rows[0].totalAmount),
-      status: rows[0].status,
-      paymentRecipientName: m?.payment_recipient_name || '',
-      paymentPhone: m?.payment_phone || '',
-      paymentQrUrl: '',
-      paymentLast5: p?.last5 || undefined,
-      paymentSubmittedAt: p?.submitted_at ? new Date(p.submitted_at).toISOString() : undefined,
-      paymentVerifiedAt: p?.verified_at ? new Date(p.verified_at).toISOString() : undefined,
-    };
+    const p = paymentRows[0]; const m = merchantRows[0];
+    return { orderId, orderNo: rows[0].orderNo, totalAmount: String(rows[0].totalAmount), status: rows[0].status, paymentRecipientName: m?.payment_recipient_name || '', paymentPhone: m?.payment_phone || '', paymentQrUrl: '', paymentLast5: p?.last5 || undefined, paymentSubmittedAt: p?.submitted_at ? new Date(p.submitted_at).toISOString() : undefined, paymentVerifiedAt: p?.verified_at ? new Date(p.verified_at).toISOString() : undefined };
   }
 
   async submitPayment(userId: string, orderId: string, last5: string) {
