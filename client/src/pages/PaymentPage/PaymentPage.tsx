@@ -30,7 +30,11 @@ const PaymentPage: React.FC = () => {
     finally { setLoading(false); }
   }, [id]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    // 清除上一页“下单成功”提示，避免提示残留在支付页面顶部
+    toast.dismiss();
+    void load();
+  }, [load]);
 
   const copyPhone = async () => {
     if (!info?.paymentPhone) return;
@@ -60,9 +64,9 @@ const PaymentPage: React.FC = () => {
     <div className="min-h-screen bg-background pb-10">
       <div className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b border-border/50">
         <div className="max-w-lg mx-auto h-12 px-4 flex items-center">
-          <button onClick={() => navigate(`/orders/${info.orderId}`)} className="w-8 h-8 flex items-center justify-center"><ArrowLeft className="w-5 h-5" /></button>
+          <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center" aria-label="返回"><ArrowLeft className="w-5 h-5" /></button>
           <h1 className="flex-1 text-center font-semibold pr-8">订单支付</h1>
-          <button onClick={() => load()} className="w-8 h-8 flex items-center justify-center"><RefreshCw className="w-4 h-4" /></button>
+          <button onClick={() => load()} className="w-8 h-8 flex items-center justify-center" aria-label="刷新"><RefreshCw className="w-4 h-4" /></button>
         </div>
       </div>
 
