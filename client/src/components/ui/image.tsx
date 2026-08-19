@@ -36,9 +36,7 @@ function applyParamsToUrl(
 ): string {
   const search = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
-    .map(([k, v]) => {
-      return `${k},${v}`;
-    })
+    .map(([k, v]) => `${k},${v}`)
     .join('/');
   if (!search) return src;
 
@@ -52,6 +50,24 @@ function applyParamsToUrl(
 
 function isTargetSrc(originSrc: string) {
   return SRC_ALLOWLIST.some((item) => originSrc.includes(item));
+}
+
+function normalizeSupabaseImageSrc(src: string): string {
+  if (!src || src.startsWith('/api/upload/image-proxy')) return src;
+
+  try {
+    const parsed = new URL(src, window.location.origin);
+    const marker = '/storage/v1/object/public/uploads/';
+    const markerIndex = parsed.pathname.indexOf(marker);
+    if (markerIndex === -1) return src;
+
+    const filePath = parsed.pathname.slice(markerIndex + marker.length);
+    if (!filePath.startsWith('images/')) return src;
+
+    return `/api/upload/image-proxy?path=${encodeURIComponent(filePath)}`;
+  } catch {
+    return src;
+  }
 }
 
 function supportWebp() {
@@ -112,6 +128,8 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
     ref,
   ) => {
     const [hasError, setHasError] = React.useState(false);
+    const normalizedSrc =
+      typeof src === 'string' ? normalizeSupabaseImageSrc(src) : src;
 
     const handleError = React.useCallback(
       (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -126,13 +144,14 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
       [],
     );
 
-    // 当 src 不在白名单时，直接渲染原生 img，保留所有原生属性
-    if (typeof src !== 'string' || !isTargetSrc(src)) {
+    // 当 src 不在白名单时，直接渲染原生 img，保留所有原生属性。
+    // Supabase 图片会在上面先转换成同源代理地址。
+    if (typeof normalizedSrc !== 'string' || !isTargetSrc(normalizedSrc)) {
       return (
         <img
           {...rest}
           ref={ref}
-          src={hasError ? undefined : src}
+          src={hasError ? undefined : normalizedSrc}
           width={width}
           height={height}
           sizes={sizes}
@@ -143,20 +162,17 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
             className,
           )}
           loading={loading}
-          decoding={"async"}
+          decoding="async"
           onError={handleError}
         />
       );
     }
 
-    // 只有当 width 是数字类型时才进行 srcSet 优化
     const numericWidth = typeof width === 'number' ? width : undefined;
-
-    // 用户传入的 srcSet 优先，否则生成优化的 srcSet
     const srcSet =
       userSrcSet ??
       buildSrcSet(
-        src,
+        normalizedSrc,
         breakpoints,
         format ?? (defaultFormat as ImageFormat),
         quality,
@@ -164,7 +180,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
         sizes,
       );
 
-    const baseSrc = applyParamsToUrl(src, {
+    const baseSrc = applyParamsToUrl(normalizedSrc, {
       resize: numericWidth ? `w_${numericWidth}` : undefined,
       quality: `Q_${quality}`,
       format: format ?? defaultFormat,
@@ -185,7 +201,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
           className,
         )}
         loading={loading}
-        decoding={"async"}
+        decoding="async"
         onError={handleError}
       />
     );
