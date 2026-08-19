@@ -6,6 +6,11 @@ export async function createOrder(addressId: string, remark?: string): Promise<{
   return data;
 }
 
+export async function createBatchOrders(addressId: string, remark?: string): Promise<{ orders: { orderId: string; orderNo: string; merchantId: string; totalAmount: string; status: string }[] }> {
+  const { data } = await axiosForBackend.post('/api/orders/batch', { addressId, remark });
+  return data;
+}
+
 export async function getOrders(params: { page?: number; pageSize?: number; status?: string }): Promise<PaginatedResponse<OrderSummary>> {
   const { data } = await axiosForBackend.get('/api/orders', { params });
   return data;
