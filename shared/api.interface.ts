@@ -53,8 +53,9 @@ export interface ShopDetail {
 }
 export interface MerchantCategory { id: string; name: string; sortOrder: number; }
 export interface ProductItem { id: string; categoryId: string; name: string; description: string; price: string; stock: number; monthSales: number; mainImageUrl: string; status: 'on_sale' | 'off_sale'; }
-export interface CartItem { id: string; productId: string; productName: string; productImageUrl: string; price: string; quantity: number; subtotal: string; }
-export interface CartInfo { merchantId: string; merchantName: string; deliveryFee: string; items: CartItem[]; productTotal: string; }
+export interface CartItem { id: string; productId: string; productName: string; productImageUrl: string; price: string; quantity: number; subtotal: string; merchantId?: string; merchantName?: string; merchantDeliveryFee?: string; }
+export interface CartMerchantGroup { merchantId: string; merchantName: string; deliveryFee: string; items: CartItem[]; productTotal: string; totalAmount: string; status: 'pending_payment'; }
+export interface CartInfo { merchantId: string; merchantName: string; deliveryFee: string; items: CartItem[]; productTotal: string; merchants: CartMerchantGroup[]; deliveryTotal: string; grandTotal: string; }
 export interface AddressItem { id: string; receiverName: string; receiverPhone: string; province: string; city: string; district: string; detailAddress: string; isDefault: boolean; }
 export interface OrderItem { id: string; productId: string; productName: string; productImageUrl: string; price: string; quantity: number; subtotal: string; }
 
